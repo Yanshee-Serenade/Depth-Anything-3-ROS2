@@ -1,0 +1,26 @@
+# Default parameters for Depth Anything 3 ROS2 node
+
+depth_anything_3:
+  ros__parameters:
+    # Model configuration
+    model_name: "depth-anything/DA3-BASE"  # HuggingFace model ID or local path
+    device: "cuda"                          # Inference device: cuda or cpu
+    cache_dir: ""                           # Model cache directory (empty for default)
+
+    # Image processing
+    inference_height: 518                   # Height for inference
+    inference_width: 518                    # Width for inference
+    input_encoding: "bgr8"                  # Expected input encoding (bgr8/rgb8)
+
+    # Output configuration
+    normalize_depth: true                   # Normalize depth to [0, 1] range
+    publish_colored: true                   # Publish colorized depth visualization
+    publish_confidence: true                # Publish confidence map
+    colormap: "turbo"                       # Colormap: turbo, viridis, plasma, magma, jet
+
+    # Performance
+    queue_size: 1                           # Subscriber queue size (1 for latest only)
+    processing_threads: 1                   # Number of processing threads
+
+    # Logging
+    log_inference_time: false               # Log per-frame inference time

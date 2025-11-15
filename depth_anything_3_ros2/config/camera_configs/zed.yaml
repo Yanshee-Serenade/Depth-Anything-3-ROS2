@@ -1,0 +1,22 @@
+# Configuration for ZED camera
+# This is a reference configuration showing typical settings for ZED cameras
+# ZED cameras output high-quality rectified RGB images
+
+depth_anything_3:
+  ros__parameters:
+    model_name: "depth-anything/DA3-BASE"
+    device: "cuda"
+
+    # ZED cameras output high resolution images
+    inference_height: 518
+    inference_width: 518
+    input_encoding: "bgr8"  # ZED outputs BGR by default
+
+    normalize_depth: true
+    publish_colored: true
+    publish_confidence: true
+    colormap: "turbo"
+
+    # ZED has good frame rates
+    queue_size: 1
+    log_inference_time: true
