@@ -46,7 +46,8 @@ def colorize_depth(
 
     Args:
         depth: Input depth map (H, W) as float32
-        colormap: OpenCV colormap name ('turbo', 'viridis', 'plasma', 'magma', 'jet', etc.)
+        colormap: OpenCV colormap name
+            ('turbo', 'viridis', 'plasma', 'magma', 'jet', etc.)
         normalize: Whether to normalize depth to [0, 1] before colorization
 
     Returns:
@@ -76,7 +77,8 @@ def colorize_depth(
 
     if colormap.lower() not in colormap_dict:
         raise ValueError(
-            f"Invalid colormap '{colormap}'. Valid options: {list(colormap_dict.keys())}"
+            f"Invalid colormap '{colormap}'. "
+            f"Valid options: {list(colormap_dict.keys())}"
         )
 
     # Normalize if requested

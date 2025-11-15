@@ -2,9 +2,11 @@
 # Multi-stage build for optimized image size
 # Supports both CPU and CUDA builds
 
+# Build arguments
 ARG ROS_DISTRO=humble
 ARG CUDA_VERSION=12.2.0
 ARG UBUNTU_VERSION=22.04
+ARG BUILD_TYPE=base
 
 # ==============================================================================
 # Stage 1: Base image with ROS2 Humble
@@ -69,9 +71,9 @@ RUN apt-get update && apt-get install -y \
 # ==============================================================================
 # Stage 3: Build stage (installs Python dependencies)
 # ==============================================================================
-FROM ${BUILD_TYPE:-base} AS builder
+FROM ${BUILD_TYPE} AS builder
 
-ARG BUILD_TYPE=base
+ARG BUILD_TYPE
 
 # Set working directory
 WORKDIR /tmp/build
@@ -84,9 +86,12 @@ RUN pip3 install --upgrade pip setuptools wheel
 
 # Install PyTorch based on build type
 RUN if [ "$BUILD_TYPE" = "cuda-base" ]; then \
-        pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121; \
+        pip3 install torch torchvision \
+            --index-url https://download.pytorch.org/whl/cu121; \
     else \
-        pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
+        pip3 install torch torchvision \
+            --index-url https://download.pytorch.org/whl/cpu \
+            --ignore-installed sympy; \
     fi
 
 # Install other Python dependencies
@@ -99,15 +104,19 @@ RUN pip3 install --no-cache-dir \
     timm>=0.9.0
 
 # Install Depth Anything 3
-RUN pip3 install --no-cache-dir git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
+RUN pip3 install --no-cache-dir \
+    git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
 
 # ==============================================================================
 # Stage 4: Final runtime image
 # ==============================================================================
-FROM ${BUILD_TYPE:-base} AS runtime
+FROM ${BUILD_TYPE} AS runtime
+
+ARG BUILD_TYPE
 
 # Copy Python packages from builder
-COPY --from=builder /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.10/dist-packages
+COPY --from=builder /usr/local/lib/python3.10/dist-packages \
+    /usr/local/lib/python3.10/dist-packages
 
 # Create workspace
 RUN mkdir -p /ros2_ws/src
@@ -128,7 +137,7 @@ RUN chmod +x /ros_entrypoint.sh
 # Environment setup
 ENV ROS_DISTRO=humble
 ENV AMENT_PREFIX_PATH=/ros2_ws/install/depth_anything_3_ros2
-ENV PYTHONPATH=/ros2_ws/install/depth_anything_3_ros2/lib/python3.10/site-packages:$PYTHONPATH
+ENV PYTHONPATH=/ros2_ws/install/depth_anything_3_ros2/lib/python3.10/site-packages:${PYTHONPATH}
 
 # Source ROS2 workspace in bashrc
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \

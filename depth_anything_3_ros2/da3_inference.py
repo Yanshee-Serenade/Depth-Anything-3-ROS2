@@ -6,7 +6,7 @@ depth estimation with CUDA support and CPU fallback.
 """
 
 import logging
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Dict
 import numpy as np
 import torch
 from PIL import Image
@@ -68,7 +68,10 @@ class DA3InferenceWrapper:
             ValueError: If requested device is invalid
         """
         if requested_device not in ['cuda', 'cpu']:
-            raise ValueError(f"Invalid device '{requested_device}'. Must be 'cuda' or 'cpu'")
+            raise ValueError(
+                f"Invalid device '{requested_device}'. "
+                f"Must be 'cuda' or 'cpu'"
+            )
 
         # Check CUDA availability
         if requested_device == 'cuda':
@@ -113,8 +116,10 @@ class DA3InferenceWrapper:
 
         except ImportError as e:
             raise RuntimeError(
-                "Failed to import Depth Anything 3. Please ensure the package is installed: "
-                "pip install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git"
+                "Failed to import Depth Anything 3. "
+                "Please ensure the package is installed: "
+                "pip install git+https://github.com/"
+                "ByteDance-Seed/Depth-Anything-3.git"
             ) from e
         except Exception as e:
             raise RuntimeError(
