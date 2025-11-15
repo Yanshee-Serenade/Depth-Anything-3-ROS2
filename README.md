@@ -37,6 +37,11 @@ This aims to be a camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), provi
 - **Multi-Camera Support**: Run multiple instances for multi-camera setups
 - **Real-Time Performance**: Optimized for low latency on Jetson Orin AGX
 - **Production Ready**: Comprehensive error handling, logging, and testing
+- **Docker Support**: Pre-configured Docker and Docker Compose files
+- **Example Images**: Sample test images and benchmark scripts included
+- **Performance Profiling**: Built-in benchmarking tools
+- **Complete Documentation**: Sphinx-based API docs and user guides
+- **CI/CD Ready**: GitHub Actions workflow for automated testing
 - **RViz2 Visualization**: Pre-configured visualization setup
 
 ### Supported Platforms
@@ -51,10 +56,15 @@ This aims to be a camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), provi
 ## Table of Contents
 
 - [Installation](#installation)
+  - [Native Installation](#installation)
+  - [Docker Installation](#docker-deployment)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Usage Examples](#usage-examples)
+- [Docker Deployment](#docker-deployment)
+- [Example Images and Benchmarks](#example-images-and-benchmarks)
 - [Performance](#performance)
+- [Documentation](#documentation)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
 - [Citation](#citation)
@@ -349,6 +359,162 @@ ros2 run depth_anything_3_ros2 depth_anything_3_node --ros-args \
   --params-file my_config.yaml \
   -r ~/image_raw:=/camera/image_raw
 ```
+
+---
+
+## Docker Deployment
+
+Docker images are provided for easy deployment on both CPU and GPU systems.
+
+### Quick Start with Docker Compose
+
+```bash
+# CPU-only mode
+docker-compose up -d depth-anything-3-cpu
+docker exec -it da3_ros2_cpu bash
+
+# GPU mode (requires nvidia-docker)
+docker-compose up -d depth-anything-3-gpu
+docker exec -it da3_ros2_gpu bash
+
+# Development mode (source mounted)
+docker-compose up -d depth-anything-3-dev
+```
+
+### Manual Docker Build
+
+```bash
+# Build GPU image
+docker build -t depth_anything_3_ros2:gpu \
+    --build-arg BUILD_TYPE=cuda-base \
+    .
+
+# Run with USB camera
+docker run -it --rm \
+    --runtime=nvidia \
+    --gpus all \
+    --network host \
+    --privileged \
+    -v /dev:/dev:rw \
+    depth_anything_3_ros2:gpu
+```
+
+### Pre-configured Services
+
+The docker-compose.yml includes:
+- `depth-anything-3-cpu`: CPU-only deployment
+- `depth-anything-3-gpu`: GPU-accelerated deployment
+- `depth-anything-3-dev`: Development environment
+- `depth-anything-3-usb-camera`: Standalone USB camera service
+
+For detailed Docker documentation, see [docker/README.md](docker/README.md).
+
+---
+
+## Example Images and Benchmarks
+
+### Sample Test Images
+
+Download sample images for quick testing:
+
+```bash
+cd examples
+./scripts/download_samples.sh
+```
+
+This downloads sample indoor, outdoor, and object images from public datasets.
+
+### Testing with Static Images
+
+```bash
+# Test single image
+python3 examples/scripts/test_with_images.py \
+    --image examples/images/outdoor/street_01.jpg \
+    --model depth-anything/DA3-BASE \
+    --device cuda \
+    --output-dir results/
+
+# Batch process directory
+python3 examples/scripts/test_with_images.py \
+    --input-dir examples/images/outdoor/ \
+    --output-dir results/ \
+    --model depth-anything/DA3-BASE
+```
+
+### Performance Benchmarking
+
+Run comprehensive benchmarks across multiple models and image sizes:
+
+```bash
+# Benchmark multiple models
+python3 examples/scripts/benchmark.py \
+    --images examples/images/ \
+    --models depth-anything/DA3-SMALL,depth-anything/DA3-BASE,depth-anything/DA3-LARGE \
+    --sizes 640x480,1280x720 \
+    --device cuda \
+    --output benchmark_results.json
+```
+
+Example output:
+```
+================================================================================
+BENCHMARK SUMMARY
+================================================================================
+Model                          Device   Size         FPS      Time (ms)    GPU Mem (MB)
+--------------------------------------------------------------------------------
+depth-anything/DA3-SMALL       cuda     640x480      25.3     39.5         1512
+depth-anything/DA3-BASE        cuda     640x480      19.8     50.5         2489
+depth-anything/DA3-LARGE       cuda     640x480      11.7     85.4         3952
+================================================================================
+```
+
+For more examples, see [examples/README.md](examples/README.md).
+
+---
+
+## Documentation
+
+Complete documentation is available in multiple formats:
+
+### Sphinx Documentation
+
+Build and view the complete API documentation:
+
+```bash
+cd docs
+pip install -r requirements.txt
+make html
+open build/html/index.html  # or xdg-open on Linux
+```
+
+### Documentation Contents
+
+- **API Reference**: Complete API documentation with examples
+  - [DA3 Inference Module](docs/source/api/da3_inference.rst)
+  - [ROS2 Node Module](docs/source/api/depth_anything_3_node.rst)
+  - [Utilities Module](docs/source/api/utils.rst)
+
+- **User Guides**:
+  - Installation and setup
+  - Camera integration guide
+  - Multi-camera configuration
+  - Performance optimization
+  - Troubleshooting
+
+- **Tutorials**:
+  - Quick start tutorial
+  - USB camera integration
+  - ZED camera integration
+  - RealSense integration
+  - Custom model training
+  - Rosbag processing
+
+### Additional Documentation
+
+- [Docker Deployment Guide](docker/README.md)
+- [Example Images Guide](examples/README.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Validation Checklist](VALIDATION_CHECKLIST.md)
 
 ---
 

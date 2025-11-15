@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # CPU-only deployment
+  depth-anything-3-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: base
+    image: depth_anything_3_ros2:cpu
+    container_name: da3_ros2_cpu
+    stdin_open: true
+    tty: true
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./models:/root/.cache/huggingface:rw
+      - ./examples:/examples:ro
+    command: bash
+
+  # GPU-enabled deployment (requires nvidia-docker)
+  depth-anything-3-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: cuda-base
+        CUDA_VERSION: 12.2.0
+    image: depth_anything_3_ros2:gpu
+    container_name: da3_ros2_gpu
+    stdin_open: true
+    tty: true
+    network_mode: host
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./models:/root/.cache/huggingface:rw
+      - ./examples:/examples:ro
+      - /dev:/dev:rw  # For camera access
+    privileged: true  # Required for camera access
+    command: bash
+
+  # Development environment with mounted source
+  depth-anything-3-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: cuda-base
+    image: depth_anything_3_ros2:dev
+    container_name: da3_ros2_dev
+    stdin_open: true
+    tty: true
+    network_mode: host
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./models:/root/.cache/huggingface:rw
+      - ./examples:/examples:ro
+      - .:/ros2_ws/src/depth_anything_3_ros2:rw  # Mount source for development
+      - /dev:/dev:rw
+    privileged: true
+    working_dir: /ros2_ws
+    command: bash -c "source /opt/ros/humble/setup.bash && colcon build --packages-select depth_anything_3_ros2 && bash"
+
+  # Standalone node with USB camera
+  depth-anything-3-usb-camera:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_TYPE: cuda-base
+    image: depth_anything_3_ros2:gpu
+    container_name: da3_usb_camera
+    network_mode: host
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_DOMAIN_ID=0
+    volumes:
+      - ./models:/root/.cache/huggingface:rw
+      - /dev:/dev:rw
+    privileged: true
+    command: >
+      bash -c "
+      source /opt/ros/humble/setup.bash &&
+      source /ros2_ws/install/setup.bash &&
+      ros2 launch depth_anything_3_ros2 usb_camera_example.launch.py
+      "
