@@ -1,0 +1,21 @@
+# Configuration for generic USB camera (v4l2_camera)
+# This is a reference configuration showing typical settings for USB cameras
+
+depth_anything_3:
+  ros__parameters:
+    model_name: "depth-anything/DA3-BASE"
+    device: "cuda"
+
+    # USB cameras typically output lower resolutions
+    inference_height: 518
+    inference_width: 518
+    input_encoding: "bgr8"
+
+    normalize_depth: true
+    publish_colored: true
+    publish_confidence: true
+    colormap: "turbo"
+
+    # USB cameras may have lower frame rates
+    queue_size: 1
+    log_inference_time: true

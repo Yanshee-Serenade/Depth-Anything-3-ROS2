@@ -1,0 +1,22 @@
+# Configuration for Intel RealSense camera
+# This is a reference configuration showing typical settings for RealSense cameras
+# RealSense cameras output RGB images alongside their native depth
+
+depth_anything_3:
+  ros__parameters:
+    model_name: "depth-anything/DA3-BASE"
+    device: "cuda"
+
+    # RealSense outputs various resolutions
+    inference_height: 518
+    inference_width: 518
+    input_encoding: "rgb8"  # RealSense typically outputs RGB
+
+    normalize_depth: true
+    publish_colored: true
+    publish_confidence: true
+    colormap: "turbo"
+
+    # RealSense has good frame rates
+    queue_size: 1
+    log_inference_time: true
