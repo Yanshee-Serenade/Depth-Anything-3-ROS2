@@ -1,3 +1,5 @@
+# WORK IN PROGRESS LOOKING FOR CONTRIBUTERS :)
+
 # Depth Anything 3 ROS2 Wrapper
 
 ## Acknowledgments and Credits
@@ -25,7 +27,7 @@ Special thanks to these developers for demonstrating effective patterns for ROS2
 
 ## Overview
 
-A production-ready, camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), providing real-time monocular depth estimation from standard RGB images. This package is designed to work seamlessly with any camera publishing standard `sensor_msgs/Image` messages.
+This aims to be a camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), providing real-time monocular depth estimation from standard RGB images. This package is designed to work seamlessly with any camera publishing standard `sensor_msgs/Image` messages.
 
 ### Key Features
 
