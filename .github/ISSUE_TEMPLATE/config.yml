@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: GitHub Discussions
-    url: https://github.com/yourusername/depth_anything_3_ros2/discussions
+    url: https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper/discussions
     about: For general questions and community discussions
   - name: ROS2 Documentation
     url: https://docs.ros.org/en/humble/
