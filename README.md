@@ -51,8 +51,8 @@ This aims to be a camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), provi
 
 ### Supported Platforms
 
-- **Primary**: NVIDIA Jetson Orin AGX 64GB (JetPack 6.x)
-- **Compatible**: Any system with Ubuntu 22.04, ROS2 Humble, and CUDA 12.x (or CPU)
+- **Primary**: NVIDIA Jetson (JetPack 6.x)
+- **Compatible**: Any system with Ubuntu 22.04, ROS2 Humble, and CUDA 12.x
 - **ROS2 Distribution**: Humble Hawksbill
 - **Python**: 3.10+
 
