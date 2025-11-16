@@ -56,16 +56,25 @@ A production-ready, camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), pro
 
 ---
 
-## Important: Model Downloads
+## Important: Dependencies and Model Downloads
 
-**This wrapper does NOT require cloning the ByteDance Depth Anything 3 repository.** Models are automatically downloaded from Hugging Face Hub on first run.
+**You do NOT need to manually clone the ByteDance Depth Anything 3 repository.** The installation process handles everything automatically.
 
-### How It Works
+### What Gets Installed
 
-- Models download automatically from [Hugging Face Hub](https://huggingface.co/depth-anything) on first use
-- Downloaded models are cached in `~/.cache/huggingface/hub/` for reuse
-- **Internet connection required** for initial model download
-- Subsequent runs use the cached models (no internet needed)
+**1. Python Package** (installed via pip in Step 2):
+- ByteDance DA3 Python API and inference code
+- Installed with: `pip install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git`
+- Pip handles cloning and installation automatically
+- One-time setup, no manual git clone needed
+
+**2. Pre-Trained Models** (downloaded automatically on first run):
+- Model weights download from [Hugging Face Hub](https://huggingface.co/depth-anything) on first use
+- Cached in `~/.cache/huggingface/hub/` for reuse
+- **Internet connection required** for initial download
+- Subsequent runs use cached models (no internet needed)
+
+**Summary**: Install the package once with pip (Step 2), then models download automatically when you first run the node.
 
 ### Offline Operation (Robots Without Internet)
 
@@ -113,8 +122,8 @@ ros2 launch depth_anything_3_ros2 depth_anything_3.launch.py
 
 ## Table of Contents
 
-- [Important: Model Downloads](#important-model-downloads)
-  - [How It Works](#how-it-works)
+- [Important: Dependencies and Model Downloads](#important-dependencies-and-model-downloads)
+  - [What Gets Installed](#what-gets-installed)
   - [Offline Operation](#offline-operation-robots-without-internet)
 - [Installation](#installation)
   - [Native Installation](#installation)
@@ -151,8 +160,9 @@ sudo apt install ros-humble-desktop
 nvidia-smi  # Verify CUDA installation
 ```
 
-3. **Internet Connection** (for initial model download):
-- Required during first run to download models from Hugging Face Hub
+3. **Internet Connection** (for initial setup):
+- Required for Step 2 (pip install of DA3 package)
+- Required for Step 5 (model weights download from Hugging Face Hub)
 - See [Offline Operation](#offline-operation-robots-without-internet) if deploying to robots without internet
 
 ### Step 1: Install ROS2 Dependencies
@@ -184,7 +194,9 @@ pip3 install transformers>=4.35.0 \
   numpy>=1.24.0 \
   timm>=0.9.0
 
-# Install Depth Anything 3 from source
+# Install ByteDance DA3 Python API (pip handles cloning automatically)
+# This provides the model inference code, NOT the pre-trained weights
+# Model weights will download from Hugging Face Hub on first run
 pip3 install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
 ```
 
@@ -193,13 +205,13 @@ pip3 install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 ```
 
-### Step 3: Clone and Build Package
+### Step 3: Clone and Build This ROS2 Wrapper
 
 ```bash
 # Navigate to your ROS2 workspace
 cd ~/ros2_ws/src  # Or create: mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
 
-# Clone this repository
+# Clone THIS ROS2 wrapper repository (not the ByteDance DA3 repo)
 git clone https://github.com/yourusername/depth_anything_3_ros2.git
 
 # Build the package
@@ -246,7 +258,7 @@ print('You can now run offline!')
 - For faster inference: Replace `DA3-BASE` with `DA3-SMALL`
 - For best quality: Replace `DA3-BASE` with `DA3-LARGE`
 
-See [Model Downloads](#important-model-downloads) for complete offline deployment instructions.
+See [Dependencies and Model Downloads](#important-dependencies-and-model-downloads) for complete offline deployment instructions.
 
 ---
 
