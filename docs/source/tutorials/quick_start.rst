@@ -24,7 +24,7 @@ Step 1: Clone Repository
 .. code-block:: bash
 
     cd ~/ros2_ws/src
-    git clone https://github.com/yourusername/depth_anything_3_ros2.git
+    git clone https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper.git
     cd ~/ros2_ws
 
 Step 2: Install Dependencies

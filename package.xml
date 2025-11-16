@@ -8,14 +8,14 @@
     This package provides real-time depth estimation from standard RGB images
     using the state-of-the-art Depth Anything 3 model from ByteDance.
   </description>
-  <maintainer email="your@email.com">Your Name</maintainer>
+  <maintainer email="info@gerdsen.ai">GerdsenAI</maintainer>
   <license>MIT</license>
 
-  <author>Your Name</author>
+  <author>GerdsenAI</author>
 
-  <url type="website">https://github.com/yourusername/depth_anything_3_ros2</url>
-  <url type="bugtracker">https://github.com/yourusername/depth_anything_3_ros2/issues</url>
-  <url type="repository">https://github.com/yourusername/depth_anything_3_ros2</url>
+  <url type="website">https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper</url>
+  <url type="bugtracker">https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper/issues</url>
+  <url type="repository">https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper</url>
 
   <!-- Build dependencies -->
   <buildtool_depend>ament_python</buildtool_depend>

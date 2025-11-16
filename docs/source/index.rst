@@ -114,8 +114,8 @@ This package would not be possible without the excellent work of:
 Support
 -------
 
-* **Issues**: `GitHub Issues <https://github.com/yourusername/depth_anything_3_ros2/issues>`_
-* **Discussions**: `GitHub Discussions <https://github.com/yourusername/depth_anything_3_ros2/discussions>`_
+* **Issues**: `GitHub Issues <https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper/issues>`_
+* **Discussions**: `GitHub Discussions <https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper/discussions>`_
 * **Documentation**: This site
 * **ROS2 Docs**: `ROS2 Humble <https://docs.ros.org/en/humble/>`_
 

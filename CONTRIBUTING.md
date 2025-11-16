@@ -210,8 +210,8 @@ Format:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/depth_anything_3_ros2.git
-cd depth_anything_3_ros2
+git clone https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper.git
+cd GerdsenAI-Depth-Anything-3-ROS2-Wrapper
 
 # Install dependencies
 pip3 install -r requirements.txt

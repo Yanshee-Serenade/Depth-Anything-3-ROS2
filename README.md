@@ -212,7 +212,7 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 cd ~/ros2_ws/src  # Or create: mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
 
 # Clone THIS ROS2 wrapper repository (not the ByteDance DA3 repo)
-git clone https://github.com/yourusername/depth_anything_3_ros2.git
+git clone https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper.git
 
 # Build the package
 cd ~/ros2_ws
@@ -985,8 +985,8 @@ The Depth Anything 3 model has its own license. Please refer to the [official re
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/depth_anything_3_ros2/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/depth_anything_3_ros2/discussions)
+- **Issues**: [GitHub Issues](https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper/discussions)
 - **ROS2 Documentation**: [ROS2 Humble Docs](https://docs.ros.org/en/humble/)
 - **Depth Anything 3**: [Official Repository](https://github.com/ByteDance-Seed/Depth-Anything-3)
 
