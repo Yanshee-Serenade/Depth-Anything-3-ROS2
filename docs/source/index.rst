@@ -69,11 +69,10 @@ Quick Links
    :caption: Tutorials
    :hidden:
 
+   tutorials/quick_start
    tutorials/usb_camera
-   tutorials/zed_camera
-   tutorials/realsense_camera
-   tutorials/custom_models
-   tutorials/rosbag_processing
+   tutorials/multi_camera
+   tutorials/performance_tuning
 
 .. toctree::
    :maxdepth: 2

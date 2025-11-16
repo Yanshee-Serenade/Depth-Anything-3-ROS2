@@ -1,0 +1,137 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug! Please fill out the information below to help us investigate.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Tell us what happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Launch node with '...'
+        2. Subscribe to topic '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe the expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where are you running this?
+      options:
+        - Native Ubuntu 22.04
+        - Docker (CPU)
+        - Docker (GPU)
+        - Jetson Orin AGX
+        - Jetson Xavier
+        - Other (specify in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: ros-version
+    attributes:
+      label: ROS2 Version
+      description: Which ROS2 distribution?
+      placeholder: "humble"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      description: CPU or GPU mode?
+      options:
+        - CUDA (GPU)
+        - CPU
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model Used
+      description: Which DA3 model were you using?
+      placeholder: "depth-anything/DA3-BASE"
+    validations:
+      required: false
+
+  - type: textarea
+    id: camera
+    attributes:
+      label: Camera Information
+      description: Which camera driver/type are you using?
+      placeholder: |
+        Camera type: USB camera
+        Driver: v4l2_camera
+        Resolution: 640x480
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output
+      description: Please copy and paste any relevant log output
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Screenshots, configuration files, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please verify the following before submitting
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have provided all requested information
+          required: true
+        - label: I have included relevant logs or error messages
+          required: false

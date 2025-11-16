@@ -37,9 +37,14 @@ A production-ready, camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), pro
 - **Production Ready**: Comprehensive error handling, logging, and testing
 - **Docker Support**: Pre-configured Docker and Docker Compose files
 - **Example Images**: Sample test images and benchmark scripts included
-- **Performance Profiling**: Built-in benchmarking tools
-- **Complete Documentation**: Sphinx-based API docs and user guides
-- **CI/CD Ready**: GitHub Actions workflow for automated testing
+- **Performance Profiling**: Built-in benchmarking and profiling tools
+- **TensorRT Support**: Optimization scripts for NVIDIA Jetson platforms
+- **Post-Processing**: Depth map filtering, hole filling, and enhancement
+- **INT8 Quantization**: Model compression for faster inference
+- **ONNX Export**: Deploy to various platforms and runtimes
+- **Complete Documentation**: Sphinx-based API docs with comprehensive tutorials
+- **CI/CD Ready**: GitHub Actions workflow for automated testing and validation
+- **Docker Testing**: Automated Docker image validation suite
 - **RViz2 Visualization**: Pre-configured visualization setup
 
 ### Supported Platforms
@@ -405,6 +410,25 @@ The docker-compose.yml includes:
 - `depth-anything-3-dev`: Development environment
 - `depth-anything-3-usb-camera`: Standalone USB camera service
 
+### Docker Testing and Validation
+
+Automated test suite for validating Docker images:
+
+```bash
+cd docker
+chmod +x test_docker.sh
+./test_docker.sh
+```
+
+This comprehensive test suite validates:
+- Docker and Docker Compose installation
+- CPU and GPU image builds
+- ROS2 installation and package builds
+- Python dependencies
+- CUDA availability (GPU images)
+- Volume mounts and networking
+- Model download capability
+
 For detailed Docker documentation, see [docker/README.md](docker/README.md).
 
 ---
@@ -466,6 +490,106 @@ depth-anything/DA3-LARGE       cuda     640x480      11.7     85.4         3952
 ================================================================================
 ```
 
+### Advanced Example Scripts
+
+#### Depth Post-Processing
+
+Apply filtering, hole filling, and enhancement to depth maps:
+
+```bash
+cd examples/scripts
+
+# Process single depth map
+python3 depth_postprocess.py \
+    --input depth.npy \
+    --output processed.npy \
+    --visualize
+
+# Batch process directory
+python3 depth_postprocess.py \
+    --input depth_dir/ \
+    --output processed_dir/ \
+    --batch
+```
+
+#### Multi-Camera Synchronization
+
+Synchronize depth estimation from multiple cameras:
+
+```bash
+# Terminal 1: Launch multi-camera setup
+ros2 launch depth_anything_3_ros2 multi_camera.launch.py \
+    camera_namespaces:=cam_left,cam_right \
+    image_topics:=/cam_left/image_raw,/cam_right/image_raw
+
+# Terminal 2: Run synchronizer
+python3 multi_camera_sync.py \
+    --cameras cam_left cam_right \
+    --sync-threshold 0.05 \
+    --output synchronized_depth/
+```
+
+#### TensorRT Optimization (Jetson)
+
+Optimize models for maximum performance on Jetson platforms:
+
+```bash
+# Optimize model
+python3 optimize_tensorrt.py \
+    --model depth-anything/DA3-BASE \
+    --output da3_base_trt.pth \
+    --precision fp16 \
+    --benchmark
+
+# Expected speedup: 2-3x faster inference
+```
+
+#### Performance Tuning
+
+Quantization, ONNX export, and profiling:
+
+```bash
+# INT8 quantization
+python3 performance_tuning.py quantize \
+    --model depth-anything/DA3-BASE \
+    --output da3_base_int8.pth
+
+# Export to ONNX
+python3 performance_tuning.py export-onnx \
+    --model depth-anything/DA3-BASE \
+    --output da3_base.onnx \
+    --benchmark
+
+# Profile layers
+python3 performance_tuning.py profile \
+    --model depth-anything/DA3-BASE \
+    --layers \
+    --memory
+```
+
+#### ROS2 Batch Processing
+
+Process ROS2 bags through depth estimation:
+
+```bash
+./ros2_batch_process.sh \
+    -i ./raw_bags \
+    -o ./depth_bags \
+    -m depth-anything/DA3-BASE \
+    -d cuda
+```
+
+#### Node Profiling
+
+Profile ROS2 node performance:
+
+```bash
+python3 profile_node.py \
+    --model depth-anything/DA3-BASE \
+    --device cuda \
+    --duration 60
+```
+
 For more examples, see [examples/README.md](examples/README.md).
 
 ---
@@ -500,12 +624,10 @@ open build/html/index.html  # or xdg-open on Linux
   - Troubleshooting
 
 - **Tutorials**:
-  - Quick start tutorial
-  - USB camera integration
-  - ZED camera integration
-  - RealSense integration
-  - Custom model training
-  - Rosbag processing
+  - [Quick Start Tutorial](docs/source/tutorials/quick_start.rst) - Get up and running in minutes
+  - [USB Camera Setup](docs/source/tutorials/usb_camera.rst) - Complete USB camera guide
+  - [Multi-Camera Setup](docs/source/tutorials/multi_camera.rst) - Synchronized multi-camera depth
+  - [Performance Tuning](docs/source/tutorials/performance_tuning.rst) - Optimization guide for all platforms
 
 ### Additional Documentation
 
@@ -531,24 +653,47 @@ Tested with 640x480 input images:
 
 ### Optimization Tips
 
-1. **Reduce Input Resolution**: Lower resolution images process faster
+1. **TensorRT Optimization** (Jetson platforms):
+```bash
+cd examples/scripts
+python3 optimize_tensorrt.py --model depth-anything/DA3-BASE \
+    --output da3_base_trt.pth --precision fp16
+# Expected: 2-3x speedup
+```
+
+2. **INT8 Quantization** for faster inference:
+```bash
+python3 performance_tuning.py quantize \
+    --model depth-anything/DA3-BASE --output da3_base_int8.pth
+# 50-75% smaller, 20-40% faster
+```
+
+3. **Reduce Input Resolution**: Lower resolution images process faster
 ```bash
 --param inference_height:=384 inference_width:=512
 ```
 
-2. **Use Smaller Models**: DA3-Base offers good balance of speed/accuracy
+4. **Use Smaller Models**: DA3-SMALL offers best speed, DA3-BASE balances speed/accuracy
 
-3. **Queue Size**: Set to 1 to always process latest frame
+5. **Queue Size**: Set to 1 to always process latest frame
 ```bash
 --param queue_size:=1
 ```
 
-4. **Multiple Cameras**: Each camera runs in separate process with shared GPU
-
-5. **Monitor Performance**: Enable logging to track bottlenecks
+6. **Disable Unused Outputs**: Save processing time
 ```bash
---param log_inference_time:=true
+--param publish_colored_depth:=false
+--param publish_confidence:=false
 ```
+
+7. **Multiple Cameras**: Each camera runs in separate process with shared GPU
+
+8. **Performance Profiling**: Profile to identify bottlenecks
+```bash
+python3 examples/scripts/profile_node.py --model depth-anything/DA3-BASE
+```
+
+For comprehensive optimization guide, see [Performance Tuning Tutorial](docs/source/tutorials/performance_tuning.rst).
 
 ---
 

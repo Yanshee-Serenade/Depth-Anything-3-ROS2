@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/yourusername/depth_anything_3_ros2/discussions
+    about: For general questions and community discussions
+  - name: ROS2 Documentation
+    url: https://docs.ros.org/en/humble/
+    about: Official ROS2 Humble documentation
+  - name: Depth Anything 3
+    url: https://github.com/ByteDance-Seed/Depth-Anything-3
+    about: Official Depth Anything 3 repository
