@@ -58,8 +58,75 @@ This aims to be a camera-agnostic ROS2 wrapper for Depth Anything 3 (DA3), provi
 
 ---
 
+## Important: Dependencies and Model Downloads
+
+**You do NOT need to manually clone the ByteDance Depth Anything 3 repository.** The installation process handles everything automatically.
+
+### What Gets Installed
+
+**1. Python Package** (installed via pip in Step 2):
+- ByteDance DA3 Python API and inference code
+- Installed with: `pip install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git`
+- Pip handles cloning and installation automatically
+- One-time setup, no manual git clone needed
+
+**2. Pre-Trained Models** (downloaded automatically on first run):
+- Model weights download from [Hugging Face Hub](https://huggingface.co/depth-anything) on first use
+- Cached in `~/.cache/huggingface/hub/` for reuse
+- **Internet connection required** for initial download
+- Subsequent runs use cached models (no internet needed)
+
+**Summary**: Install the package once with pip (Step 2), then models download automatically when you first run the node.
+
+### Offline Operation (Robots Without Internet)
+
+For robots or systems without internet access, pre-download models on a connected machine:
+
+```bash
+# On a machine WITH internet connection:
+python3 -c "
+from transformers import AutoImageProcessor, AutoModelForDepthEstimation
+# Download model (only needs to be done once)
+AutoImageProcessor.from_pretrained('depth-anything/DA3-BASE')
+AutoModelForDepthEstimation.from_pretrained('depth-anything/DA3-BASE')
+print('Model downloaded to ~/.cache/huggingface/hub/')
+"
+
+# Copy the cache directory to your offline robot:
+# On source machine:
+tar -czf da3_models.tar.gz -C ~/.cache/huggingface .
+
+# On target robot (via USB drive, SCP, etc.):
+mkdir -p ~/.cache/huggingface
+tar -xzf da3_models.tar.gz -C ~/.cache/huggingface/
+```
+
+Alternatively, set a custom cache directory:
+
+```bash
+# Download to specific location
+export HF_HOME=/path/to/models
+python3 -c "from transformers import AutoModelForDepthEstimation; \
+            AutoModelForDepthEstimation.from_pretrained('depth-anything/DA3-BASE')"
+
+# On robot, point to the same location
+export HF_HOME=/path/to/models
+ros2 launch depth_anything_3_ros2 depth_anything_3.launch.py
+```
+
+**Available Models:**
+- `depth-anything/DA3-SMALL` - Fastest, ~1.5GB download
+- `depth-anything/DA3-BASE` - Balanced, ~2.5GB download
+- `depth-anything/DA3-LARGE` - Best quality, ~4GB download
+- `depth-anything/DA3-GIANT` - Maximum quality, ~6.5GB download
+
+---
+
 ## Table of Contents
 
+- [Important: Dependencies and Model Downloads](#important-dependencies-and-model-downloads)
+  - [What Gets Installed](#what-gets-installed)
+  - [Offline Operation](#offline-operation-robots-without-internet)
 - [Installation](#installation)
   - [Native Installation](#installation)
   - [Docker Installation](#docker-deployment)
@@ -95,6 +162,11 @@ sudo apt install ros-humble-desktop
 nvidia-smi  # Verify CUDA installation
 ```
 
+3. **Internet Connection** (for initial setup):
+- Required for Step 2 (pip install of DA3 package)
+- Required for Step 5 (model weights download from Hugging Face Hub)
+- See [Offline Operation](#offline-operation-robots-without-internet) if deploying to robots without internet
+
 ### Step 1: Install ROS2 Dependencies
 
 ```bash
@@ -124,7 +196,9 @@ pip3 install transformers>=4.35.0 \
   numpy>=1.24.0 \
   timm>=0.9.0
 
-# Install Depth Anything 3 from source
+# Install ByteDance DA3 Python API (pip handles cloning automatically)
+# This provides the model inference code, NOT the pre-trained weights
+# Model weights will download from Hugging Face Hub on first run
 pip3 install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
 ```
 
@@ -133,13 +207,13 @@ pip3 install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 ```
 
-### Step 3: Clone and Build Package
+### Step 3: Clone and Build This ROS2 Wrapper
 
 ```bash
 # Navigate to your ROS2 workspace
 cd ~/ros2_ws/src  # Or create: mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
 
-# Clone this repository
+# Clone THIS ROS2 wrapper repository (not the ByteDance DA3 repo)
 git clone https://github.com/yourusername/depth_anything_3_ros2.git
 
 # Build the package
@@ -160,6 +234,33 @@ ros2 pkg list | grep depth_anything_3_ros2
 colcon test --packages-select depth_anything_3_ros2
 colcon test-result --verbose
 ```
+
+### Step 5: Pre-Download Models (Optional but Recommended)
+
+Pre-download models to avoid delays on first run. **This step is REQUIRED if deploying to offline robots.**
+
+```bash
+# Download a specific model (requires internet connection)
+python3 -c "
+from transformers import AutoImageProcessor, AutoModelForDepthEstimation
+print('Downloading DA3-BASE model...')
+AutoImageProcessor.from_pretrained('depth-anything/DA3-BASE')
+AutoModelForDepthEstimation.from_pretrained('depth-anything/DA3-BASE')
+print('Model cached to ~/.cache/huggingface/hub/')
+print('You can now run offline!')
+"
+
+# For offline robots, copy the cache:
+# tar -czf da3_models.tar.gz -C ~/.cache/huggingface .
+# Transfer da3_models.tar.gz to robot and extract:
+# tar -xzf da3_models.tar.gz -C ~/.cache/huggingface/
+```
+
+**Alternative models:**
+- For faster inference: Replace `DA3-BASE` with `DA3-SMALL`
+- For best quality: Replace `DA3-BASE` with `DA3-LARGE`
+
+See [Dependencies and Model Downloads](#important-dependencies-and-model-downloads) for complete offline deployment instructions.
 
 ---
 
@@ -703,7 +804,45 @@ For comprehensive optimization guide, see [Performance Tuning Tutorial](docs/sou
 
 ### Common Issues
 
-#### 1. CUDA Out of Memory
+#### 1. Model Download Failures
+
+**Error**: `Failed to load model from Hugging Face Hub` or `Connection timeout`
+
+**Solutions**:
+- **Check internet connection**: `ping huggingface.co`
+- **Verify Hugging Face Hub is accessible**: May be blocked by firewall/proxy
+- **Pre-download models manually**:
+  ```bash
+  python3 -c "from transformers import AutoImageProcessor, AutoModelForDepthEstimation; \
+              AutoImageProcessor.from_pretrained('depth-anything/DA3-BASE'); \
+              AutoModelForDepthEstimation.from_pretrained('depth-anything/DA3-BASE')"
+  ```
+- **Use custom cache directory**: Set `HF_HOME=/path/to/models` environment variable
+- **For offline robots**: See [Offline Operation](#offline-operation-robots-without-internet) section
+
+#### 2. Model Not Found on Offline Robot
+
+**Error**: `Model depth-anything/DA3-BASE not found` on robot without internet
+
+**Solution**: Pre-download models and copy cache directory:
+```bash
+# On development machine WITH internet:
+python3 -c "from transformers import AutoModelForDepthEstimation; \
+            AutoModelForDepthEstimation.from_pretrained('depth-anything/DA3-BASE')"
+tar -czf da3_models.tar.gz -C ~/.cache/huggingface .
+
+# Transfer to robot (USB, SCP, etc.) and extract:
+ssh robot@robot-ip
+mkdir -p ~/.cache/huggingface
+tar -xzf da3_models.tar.gz -C ~/.cache/huggingface/
+```
+
+Verify models are available:
+```bash
+ls ~/.cache/huggingface/hub/models--depth-anything--*
+```
+
+#### 3. CUDA Out of Memory
 
 **Error**: `RuntimeError: CUDA out of memory`
 

@@ -51,7 +51,31 @@ Step 3: Build Package
     colcon build --packages-select depth_anything_3_ros2
     source install/setup.bash
 
-Step 4: Download Sample Images (Optional)
+Step 4: Download Model (Requires Internet)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**IMPORTANT**: Models are downloaded automatically from Hugging Face Hub
+on first run. Pre-download to avoid delays:
+
+.. code-block:: bash
+
+    # Download DA3-BASE model (requires internet connection)
+    python3 -c "
+    from transformers import AutoImageProcessor, AutoModelForDepthEstimation
+    print('Downloading DA3-BASE model from Hugging Face Hub...')
+    AutoImageProcessor.from_pretrained('depth-anything/DA3-BASE')
+    AutoModelForDepthEstimation.from_pretrained('depth-anything/DA3-BASE')
+    print('Model cached to ~/.cache/huggingface/hub/')
+    print('You can now run offline!')
+    "
+
+This downloads approximately 2.5GB and caches it in
+``~/.cache/huggingface/hub/``.
+
+**For offline robots**: See the main README for instructions on
+transferring cached models to systems without internet access.
+
+Step 5: Download Sample Images (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For testing without a camera:
