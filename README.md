@@ -2,6 +2,9 @@
 
 # Depth Anything 3 ROS2 Wrapper
 
+<img width="3440" height="1440" alt="image" src="https://github.com/user-attachments/assets/4d2c1cdf-0d8c-448c-a3f9-8e3557e37d81" />
+
+
 ## Acknowledgments and Credits
 
 This package would not be possible without the excellent work of the following projects and teams:
