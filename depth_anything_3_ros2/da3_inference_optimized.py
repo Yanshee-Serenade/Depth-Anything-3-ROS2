@@ -182,7 +182,13 @@ class DA3InferenceOptimized:
 
             # Load TensorRT model
             self._model = TRTModule()
-            self._model.load_state_dict(torch.load(trt_path))
+            # Use weights_only=True for security (PyTorch 1.13+)
+            try:
+                self._model.load_state_dict(torch.load(trt_path, weights_only=True))
+            except TypeError:
+                # Fallback for older PyTorch versions
+                logger.warning("PyTorch version does not support weights_only parameter")
+                self._model.load_state_dict(torch.load(trt_path))
 
             logger.info(f"TensorRT model loaded successfully ({self.backend.value})")
 
@@ -208,12 +214,27 @@ class DA3InferenceOptimized:
         Returns:
             Dictionary with depth, confidence, and optional camera params
         """
-        # Validate input
+        # Comprehensive input validation
         if not isinstance(image, np.ndarray):
             raise ValueError(f"Expected numpy array, got {type(image)}")
 
         if image.ndim != 3 or image.shape[2] != 3:
             raise ValueError(f"Expected RGB image (H, W, 3), got {image.shape}")
+
+        if image.size == 0:
+            raise ValueError("Image is empty (size=0)")
+
+        if image.shape[0] <= 0 or image.shape[1] <= 0:
+            raise ValueError(f"Invalid image dimensions: {image.shape}")
+
+        if image.shape[0] > 8192 or image.shape[1] > 8192:
+            raise ValueError(
+                f"Image too large: {image.shape}. "
+                f"Maximum supported size is 8192x8192"
+            )
+
+        if not np.isfinite(image).all():
+            raise ValueError("Image contains NaN or infinite values")
 
         original_size = (image.shape[0], image.shape[1])
 
@@ -274,6 +295,16 @@ class DA3InferenceOptimized:
         with torch.cuda.amp.autocast(enabled=(self.device == 'cuda')):
             prediction = self._model.inference([pil_image])
 
+        # Validate prediction
+        if prediction is None:
+            raise RuntimeError("Model returned None prediction")
+
+        if not hasattr(prediction, 'depth') or prediction.depth is None:
+            raise RuntimeError("Model prediction missing depth output")
+
+        if len(prediction.depth) == 0:
+            raise RuntimeError("Model returned empty depth map")
+
         # Extract results
         result = {
             'depth': prediction.depth[0].astype(np.float32)
@@ -305,7 +336,12 @@ class DA3InferenceOptimized:
 
             # TensorRT models typically only output depth
             if return_confidence:
-                # Generate placeholder confidence or use separate model
+                # TensorRT converted models do not include confidence output
+                # Return uniform confidence map as placeholder
+                logger.warning(
+                    "TensorRT model does not support confidence output. "
+                    "Returning uniform confidence map."
+                )
                 confidence = np.ones_like(depth, dtype=np.float32)
                 result['confidence'] = confidence
 
@@ -343,8 +379,36 @@ class DA3InferenceOptimized:
         if self.device == 'cuda':
             GPUMemoryMonitor.clear_cache()
 
-    def __del__(self):
-        """Cleanup resources."""
+    def cleanup(self) -> None:
+        """
+        Explicitly cleanup resources.
+
+        Call this method when done with the model to ensure proper cleanup.
+        """
         if self._model is not None:
             del self._model
+            self._model = None
+
+        # Clear GPU cache
         self.clear_cache()
+
+        # Clean up GPU utilities
+        if hasattr(self, 'upsampler'):
+            del self.upsampler
+
+        if hasattr(self, 'preprocessor'):
+            del self.preprocessor
+
+        if hasattr(self, 'stream_manager') and self.stream_manager is not None:
+            if hasattr(self.stream_manager, 'cleanup'):
+                self.stream_manager.cleanup()
+
+        logger.info("DA3InferenceOptimized cleanup completed")
+
+    def __del__(self):
+        """Cleanup resources on deletion (fallback)."""
+        try:
+            self.cleanup()
+        except Exception as e:
+            # Don't raise exceptions in __del__
+            logger.error(f"Error during cleanup: {e}")

@@ -13,7 +13,7 @@ This node implements aggressive optimizations for real-time depth estimation:
 import time
 import threading
 from typing import Optional
-from queue import Queue, Empty
+from queue import Queue, Empty, Full
 import numpy as np
 
 import rclpy
@@ -122,6 +122,10 @@ class DepthAnything3NodeOptimized(Node):
         # Store latest camera info
         self.latest_camera_info: Optional[CameraInfo] = None
 
+        # Thread management
+        self._running = True
+        self._shutdown_lock = threading.Lock()
+
         # Async colorization setup
         self.colorization_queue = None
         self.colorization_thread = None
@@ -223,11 +227,15 @@ class DepthAnything3NodeOptimized(Node):
 
     def _colorization_worker(self) -> None:
         """Worker thread for async colorization."""
-        while rclpy.ok():
+        while self._running and rclpy.ok():
             try:
                 # Get item from queue with timeout
                 item = self.colorization_queue.get(timeout=0.1)
                 depth_map, header = item
+
+                # Check if still running before processing
+                if not self._running:
+                    break
 
                 # Colorize depth
                 colored_depth = colorize_depth(
@@ -236,11 +244,15 @@ class DepthAnything3NodeOptimized(Node):
                     normalize=True
                 )
 
-                # Publish
+                # Publish with thread safety
                 try:
-                    colored_msg = self.bridge.cv2_to_imgmsg(colored_depth, encoding='bgr8')
-                    colored_msg.header = header
-                    self.depth_colored_pub.publish(colored_msg)
+                    with self._shutdown_lock:
+                        if self._running and hasattr(self, 'depth_colored_pub'):
+                            colored_msg = self.bridge.cv2_to_imgmsg(
+                                colored_depth, encoding='bgr8'
+                            )
+                            colored_msg.header = header
+                            self.depth_colored_pub.publish(colored_msg)
                 except CvBridgeError as e:
                     self.get_logger().error(f'Failed to publish colored depth: {e}')
 
@@ -248,6 +260,8 @@ class DepthAnything3NodeOptimized(Node):
                 continue
             except Exception as e:
                 self.get_logger().error(f'Error in colorization worker: {e}')
+
+        self.get_logger().info("Colorization worker thread exiting")
 
     def camera_info_callback(self, msg: CameraInfo) -> None:
         """Store latest camera info."""
@@ -267,6 +281,11 @@ class DepthAnything3NodeOptimized(Node):
                 cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='rgb8')
             except CvBridgeError as e:
                 self.get_logger().error(f'CV Bridge conversion failed: {e}')
+                return
+
+            # Validate converted image
+            if cv_image is None or cv_image.size == 0:
+                self.get_logger().error('Received empty image after conversion')
                 return
 
             # Ensure correct format
@@ -312,8 +331,9 @@ class DepthAnything3NodeOptimized(Node):
                         # Async colorization (off critical path)
                         try:
                             self.colorization_queue.put_nowait((depth_map.copy(), msg.header))
-                        except:
-                            pass  # Queue full, skip this frame
+                        except Full:
+                            # Queue full, skip this frame (OK for real-time)
+                            pass
                     else:
                         # Synchronous colorization (fallback)
                         self._publish_colored_depth(depth_map, msg.header)
@@ -321,15 +341,17 @@ class DepthAnything3NodeOptimized(Node):
                     # Always colorize async
                     try:
                         self.colorization_queue.put_nowait((depth_map.copy(), msg.header))
-                    except:
+                    except Full:
+                        # Queue full, skip this frame (OK for real-time)
                         pass
                 else:
                     # Always colorize sync
                     self._publish_colored_depth(depth_map, msg.header)
 
-            # Publish camera info
+            # Publish camera info (create a copy to avoid modifying original)
             if self.latest_camera_info is not None:
-                camera_info_msg = self.latest_camera_info
+                from copy import deepcopy
+                camera_info_msg = deepcopy(self.latest_camera_info)
                 camera_info_msg.header = msg.header
                 self.camera_info_pub.publish(camera_info_msg)
 
@@ -416,11 +438,35 @@ class DepthAnything3NodeOptimized(Node):
         """Clean up resources."""
         self.get_logger().info("Shutting down optimized DA3 node")
 
-        # Stop colorization thread
-        if self.colorization_thread is not None:
-            self.colorization_thread.join(timeout=1.0)
+        # Signal threads to stop
+        self._running = False
 
+        # Stop colorization thread with longer timeout
+        if self.colorization_thread is not None and self.colorization_thread.is_alive():
+            self.get_logger().info("Waiting for colorization thread to exit...")
+            self.colorization_thread.join(timeout=5.0)
+
+            if self.colorization_thread.is_alive():
+                self.get_logger().warning(
+                    "Colorization thread did not exit cleanly"
+                )
+
+        # Clean up queue
+        if self.colorization_queue is not None:
+            # Clear any remaining items
+            while not self.colorization_queue.empty():
+                try:
+                    self.colorization_queue.get_nowait()
+                except Empty:
+                    break
+
+        # Clean up model with explicit cleanup method
         if hasattr(self, 'model'):
+            if hasattr(self.model, 'cleanup'):
+                try:
+                    self.model.cleanup()
+                except Exception as e:
+                    self.get_logger().error(f"Error during model cleanup: {e}")
             del self.model
 
         super().destroy_node()

@@ -155,9 +155,12 @@ def save_tensorrt_model(model_trt, output_path: Path, metadata: dict):
 
     # Save metadata
     metadata_path = output_path.with_suffix('.json')
-    with open(metadata_path, 'w') as f:
-        json.dump(metadata, f, indent=2)
-    print(f"Metadata saved to: {metadata_path}")
+    try:
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        print(f"Metadata saved to: {metadata_path}")
+    except OSError as e:
+        print(f"WARNING: Failed to save metadata: {e}")
 
 
 def benchmark_model(model, input_size, iterations=100, warmup=10):
@@ -262,6 +265,27 @@ def main():
 
     args = parser.parse_args()
 
+    # Validate arguments
+    if args.input_size[0] <= 0 or args.input_size[1] <= 0:
+        print("ERROR: Input size must be positive")
+        sys.exit(1)
+
+    if args.input_size[0] > 4096 or args.input_size[1] > 4096:
+        print("WARNING: Very large input size may cause out of memory errors")
+
+    # Check output path
+    output_path = Path(args.output)
+    if output_path.exists() and not output_path.is_file():
+        print(f"ERROR: Output path exists and is not a file: {output_path}")
+        sys.exit(1)
+
+    if not output_path.parent.exists():
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            print(f"ERROR: Cannot create output directory: {e}")
+            sys.exit(1)
+
     # Check dependencies
     check_dependencies()
 
@@ -320,11 +344,22 @@ def main():
         print("\n" + "=" * 60)
         print("COMPARISON")
         print("=" * 60)
-        speedup = results_orig['mean_ms'] / results_trt['mean_ms']
-        print(f"Speedup:      {speedup:.2f}x")
+
+        # Safely calculate speedup
+        if results_trt['mean_ms'] > 0:
+            speedup = results_orig['mean_ms'] / results_trt['mean_ms']
+            print(f"Speedup:      {speedup:.2f}x")
+        else:
+            print("Speedup:      Unable to calculate (TRT time is zero)")
+
         print(f"Original:     {results_orig['mean_ms']:.2f} ms ({results_orig['fps']:.2f} FPS)")
         print(f"TensorRT:     {results_trt['mean_ms']:.2f} ms ({results_trt['fps']:.2f} FPS)")
         print(f"Time saved:   {results_orig['mean_ms'] - results_trt['mean_ms']:.2f} ms")
+
+    # Cleanup to free GPU memory
+    del model_orig
+    del model_trt
+    torch.cuda.empty_cache()
 
     print("\n" + "=" * 60)
     print("CONVERSION COMPLETE")

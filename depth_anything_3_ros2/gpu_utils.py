@@ -70,11 +70,23 @@ class GPUDepthUpsampler:
         Returns:
             Upsampled tensor on same device
         """
+        # Validate inputs
+        if tensor is None:
+            raise ValueError("Tensor cannot be None")
+
+        if tensor.numel() == 0:
+            raise ValueError("Tensor is empty")
+
+        if target_size[0] <= 0 or target_size[1] <= 0:
+            raise ValueError(f"Invalid target size: {target_size}")
+
         # Ensure 4D tensor (B, C, H, W)
         if tensor.ndim == 2:
             tensor = tensor.unsqueeze(0).unsqueeze(0)
         elif tensor.ndim == 3:
             tensor = tensor.unsqueeze(0)
+        elif tensor.ndim != 4:
+            raise ValueError(f"Expected 2D, 3D, or 4D tensor, got {tensor.ndim}D")
 
         # Perform interpolation
         upsampled = F.interpolate(
@@ -101,6 +113,19 @@ class GPUDepthUpsampler:
         Returns:
             Upsampled numpy array
         """
+        # Validate inputs
+        if array is None:
+            raise ValueError("Array cannot be None")
+
+        if array.size == 0:
+            raise ValueError("Array is empty")
+
+        if not np.isfinite(array).all():
+            raise ValueError("Array contains NaN or infinite values")
+
+        if target_size[0] <= 0 or target_size[1] <= 0:
+            raise ValueError(f"Invalid target size: {target_size}")
+
         # Convert to tensor and move to GPU
         tensor = torch.from_numpy(array).to(self.device)
 
@@ -255,6 +280,14 @@ class CUDAStreamManager:
             for stream in self.streams:
                 stream.synchronize()
 
+    def cleanup(self):
+        """Clean up CUDA streams."""
+        if self.enabled and self.streams is not None:
+            self.synchronize_all()
+            self.streams = None
+            self.enabled = False
+            logger.info("CUDA streams cleaned up")
+
 
 def tensor_to_numpy_gpu(tensor: torch.Tensor) -> np.ndarray:
     """
@@ -302,8 +335,19 @@ def pinned_numpy_array(shape: Tuple[int, ...], dtype=np.float32) -> np.ndarray:
     if not torch.cuda.is_available():
         return np.zeros(shape, dtype=dtype)
 
+    # Map numpy dtype to torch dtype
+    dtype_map = {
+        np.float32: torch.float32,
+        np.float64: torch.float64,
+        np.int32: torch.int32,
+        np.int64: torch.int64,
+        np.uint8: torch.uint8,
+    }
+
+    torch_dtype = dtype_map.get(dtype, torch.float32)
+
     # Create tensor with pinned memory
-    tensor = torch.zeros(shape, dtype=torch.float32, pin_memory=True)
+    tensor = torch.zeros(shape, dtype=torch_dtype, pin_memory=True)
     # Get numpy view
     return tensor.numpy()
 
@@ -327,11 +371,14 @@ class GPUMemoryMonitor:
                 'total_mb': 0.0
             }
 
-        allocated = torch.cuda.memory_allocated() / (1024 ** 2)
-        reserved = torch.cuda.memory_reserved() / (1024 ** 2)
+        # Use current device instead of hardcoded device 0
+        device_id = torch.cuda.current_device()
 
-        # Get total memory
-        total = torch.cuda.get_device_properties(0).total_memory / (1024 ** 2)
+        allocated = torch.cuda.memory_allocated(device_id) / (1024 ** 2)
+        reserved = torch.cuda.memory_reserved(device_id) / (1024 ** 2)
+
+        # Get total memory for current device
+        total = torch.cuda.get_device_properties(device_id).total_memory / (1024 ** 2)
         free = total - allocated
 
         return {
