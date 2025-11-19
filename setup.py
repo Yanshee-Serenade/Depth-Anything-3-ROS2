@@ -38,6 +38,7 @@ setup(
     entry_points={
         'console_scripts': [
             'depth_anything_3_node = depth_anything_3_ros2.depth_anything_3_node:main',
+            'depth_anything_3_node_optimized = depth_anything_3_ros2.depth_anything_3_node_optimized:main',
         ],
     },
 )
