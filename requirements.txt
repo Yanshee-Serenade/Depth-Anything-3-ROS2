@@ -20,3 +20,6 @@ timm>=0.9.0
 
 # Depth Anything 3 (install from source)
 # Install with: pip install git+https://github.com/ByteDance-Seed/Depth-Anything-3.git
+
+# Development dependencies (type checking)
+types-setuptools>=65.0.0
