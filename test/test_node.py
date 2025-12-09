@@ -5,7 +5,7 @@ Tests node initialization, parameter handling, and message publishing.
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 import numpy as np
 
 import rclpy
@@ -28,11 +28,9 @@ class TestDepthAnything3Node(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.test_image = np.random.randint(
-            0, 255, (480, 640, 3), dtype=np.uint8
-        )
+        self.test_image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_node_initialization(self, mock_wrapper):
         """Test node initializes with default parameters."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
@@ -44,16 +42,16 @@ class TestDepthAnything3Node(unittest.TestCase):
         node = DepthAnything3Node()
 
         # Check node name
-        self.assertEqual(node.get_name(), 'depth_anything_3')
+        self.assertEqual(node.get_name(), "depth_anything_3")
 
         # Check parameters exist
-        self.assertTrue(node.has_parameter('model_name'))
-        self.assertTrue(node.has_parameter('device'))
-        self.assertTrue(node.has_parameter('normalize_depth'))
+        self.assertTrue(node.has_parameter("model_name"))
+        self.assertTrue(node.has_parameter("device"))
+        self.assertTrue(node.has_parameter("normalize_depth"))
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_parameter_loading(self, mock_wrapper):
         """Test parameter loading from ROS2 parameter server."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
@@ -65,15 +63,14 @@ class TestDepthAnything3Node(unittest.TestCase):
 
         # Check default parameter values
         self.assertEqual(
-            node.get_parameter('model_name').value,
-            'depth-anything/DA3-BASE'
+            node.get_parameter("model_name").value, "depth-anything/DA3-BASE"
         )
-        self.assertEqual(node.get_parameter('device').value, 'cuda')
-        self.assertTrue(node.get_parameter('normalize_depth').value)
+        self.assertEqual(node.get_parameter("device").value, "cuda")
+        self.assertTrue(node.get_parameter("normalize_depth").value)
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_publishers_created(self, mock_wrapper):
         """Test that all publishers are created correctly."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
@@ -91,7 +88,7 @@ class TestDepthAnything3Node(unittest.TestCase):
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_subscribers_created(self, mock_wrapper):
         """Test that all subscribers are created correctly."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
@@ -107,7 +104,7 @@ class TestDepthAnything3Node(unittest.TestCase):
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_image_callback_processing(self, mock_wrapper):
         """Test image callback processes messages correctly."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
@@ -115,8 +112,8 @@ class TestDepthAnything3Node(unittest.TestCase):
         # Mock the model inference
         mock_model = MagicMock()
         mock_result = {
-            'depth': np.random.rand(480, 640).astype(np.float32),
-            'confidence': np.random.rand(480, 640).astype(np.float32)
+            "depth": np.random.rand(480, 640).astype(np.float32),
+            "confidence": np.random.rand(480, 640).astype(np.float32),
         }
         mock_model.inference.return_value = mock_result
         mock_wrapper.return_value = mock_model
@@ -127,10 +124,10 @@ class TestDepthAnything3Node(unittest.TestCase):
         msg = Image()
         msg.header = Header()
         msg.header.stamp = node.get_clock().now().to_msg()
-        msg.header.frame_id = 'camera_optical_frame'
+        msg.header.frame_id = "camera_optical_frame"
         msg.height = 480
         msg.width = 640
-        msg.encoding = 'rgb8'
+        msg.encoding = "rgb8"
         msg.is_bigendian = 0
         msg.step = 640 * 3
         msg.data = self.test_image.tobytes()
@@ -144,5 +141,5 @@ class TestDepthAnything3Node(unittest.TestCase):
         node.destroy_node()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
