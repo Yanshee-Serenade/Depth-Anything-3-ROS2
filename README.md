@@ -473,7 +473,9 @@ ros2 run depth_anything_3_ros2 depth_anything_3_node --ros-args \
 
 ## Docker Deployment
 
-Docker images are provided for easy deployment on both CPU and GPU systems.
+Docker configuration files are provided for building and deploying on both CPU and GPU systems.
+
+> **Important**: No pre-built Docker images are published to Docker Hub or any container registry. You must build the images locally using `docker-compose build` or `docker-compose up` (which auto-builds).
 
 ### Quick Start with Docker Compose
 
