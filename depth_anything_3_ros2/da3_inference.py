@@ -27,7 +27,7 @@ class DA3InferenceWrapper:
         self,
         model_name: str = "depth-anything/DA3-BASE",
         device: str = "cuda",
-        cache_dir: Optional[str] = None
+        cache_dir: Optional[str] = None,
     ):
         """
         Initialize the DA3 inference wrapper.
@@ -67,26 +67,25 @@ class DA3InferenceWrapper:
         Raises:
             ValueError: If requested device is invalid
         """
-        if requested_device not in ['cuda', 'cpu']:
+        if requested_device not in ["cuda", "cpu"]:
             raise ValueError(
-                f"Invalid device '{requested_device}'. "
-                f"Must be 'cuda' or 'cpu'"
+                f"Invalid device '{requested_device}'. " f"Must be 'cuda' or 'cpu'"
             )
 
         # Check CUDA availability
-        if requested_device == 'cuda':
+        if requested_device == "cuda":
             if not torch.cuda.is_available():
                 logger.warning(
                     "CUDA requested but not available. Falling back to CPU. "
                     "Performance may be degraded."
                 )
-                return 'cpu'
+                return "cpu"
             else:
                 cuda_device = torch.cuda.get_device_name(0)
                 logger.info(f"Using CUDA device: {cuda_device}")
-                return 'cuda'
+                return "cuda"
 
-        return 'cpu'
+        return "cpu"
 
     def _load_model(self) -> None:
         """
@@ -104,8 +103,7 @@ class DA3InferenceWrapper:
             # Load model with optional cache directory
             if self.cache_dir:
                 self._model = DepthAnything3.from_pretrained(
-                    self.model_name,
-                    cache_dir=self.cache_dir
+                    self.model_name, cache_dir=self.cache_dir
                 )
             else:
                 self._model = DepthAnything3.from_pretrained(self.model_name)
@@ -130,7 +128,7 @@ class DA3InferenceWrapper:
         self,
         image: np.ndarray,
         return_confidence: bool = True,
-        return_camera_params: bool = False
+        return_camera_params: bool = False,
     ) -> Dict[str, np.ndarray]:
         """
         Run depth inference on an input image.
@@ -161,9 +159,7 @@ class DA3InferenceWrapper:
             )
 
         if image.dtype != np.uint8:
-            logger.warning(
-                f"Expected uint8 image, got {image.dtype}. Converting..."
-            )
+            logger.warning(f"Expected uint8 image, got {image.dtype}. Converting...")
             image = image.astype(np.uint8)
 
         try:
@@ -175,22 +171,20 @@ class DA3InferenceWrapper:
                 prediction = self._model.inference([pil_image])
 
             # Extract results
-            result = {
-                'depth': prediction.depth[0].astype(np.float32)
-            }
+            result = {"depth": prediction.depth[0].astype(np.float32)}
 
             if return_confidence:
-                result['confidence'] = prediction.conf[0].astype(np.float32)
+                result["confidence"] = prediction.conf[0].astype(np.float32)
 
             if return_camera_params:
-                result['extrinsics'] = prediction.extrinsics[0].astype(np.float32)
-                result['intrinsics'] = prediction.intrinsics[0].astype(np.float32)
+                result["extrinsics"] = prediction.extrinsics[0].astype(np.float32)
+                result["intrinsics"] = prediction.intrinsics[0].astype(np.float32)
 
             return result
 
         except torch.cuda.OutOfMemoryError as e:
             # Clear CUDA cache on OOM
-            if self.device == 'cuda':
+            if self.device == "cuda":
                 torch.cuda.empty_cache()
             raise RuntimeError(
                 f"CUDA out of memory during inference. Try reducing image size or "
@@ -207,16 +201,16 @@ class DA3InferenceWrapper:
             Dictionary with 'allocated_mb' and 'reserved_mb' if CUDA is available,
             None otherwise
         """
-        if self.device == 'cuda' and torch.cuda.is_available():
+        if self.device == "cuda" and torch.cuda.is_available():
             return {
-                'allocated_mb': torch.cuda.memory_allocated() / (1024 ** 2),
-                'reserved_mb': torch.cuda.memory_reserved() / (1024 ** 2)
+                "allocated_mb": torch.cuda.memory_allocated() / (1024**2),
+                "reserved_mb": torch.cuda.memory_reserved() / (1024**2),
             }
         return None
 
     def clear_cache(self) -> None:
         """Clear CUDA cache to free up memory."""
-        if self.device == 'cuda' and torch.cuda.is_available():
+        if self.device == "cuda" and torch.cuda.is_available():
             torch.cuda.empty_cache()
             logger.info("CUDA cache cleared")
 

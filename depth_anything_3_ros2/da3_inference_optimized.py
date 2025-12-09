@@ -16,7 +16,7 @@ from .gpu_utils import (
     GPUDepthUpsampler,
     GPUImagePreprocessor,
     CUDAStreamManager,
-    GPUMemoryMonitor
+    GPUMemoryMonitor,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class InferenceBackend(Enum):
     """Available inference backends."""
+
     PYTORCH = "pytorch"
     TENSORRT_FP16 = "tensorrt_fp16"
     TENSORRT_INT8 = "tensorrt_int8"
@@ -51,7 +52,7 @@ class DA3InferenceOptimized:
         enable_upsampling: bool = True,
         upsample_mode: str = "bilinear",
         use_cuda_streams: bool = False,
-        trt_model_path: Optional[str] = None
+        trt_model_path: Optional[str] = None,
     ):
         """
         Initialize optimized DA3 inference wrapper.
@@ -78,13 +79,12 @@ class DA3InferenceOptimized:
         # Initialize GPU utilities
         self.upsampler = GPUDepthUpsampler(mode=upsample_mode, device=self.device)
         self.preprocessor = GPUImagePreprocessor(
-            target_size=model_input_size,
-            device=self.device
+            target_size=model_input_size, device=self.device
         )
 
         # Initialize CUDA streams
         self.stream_manager = None
-        if use_cuda_streams and self.device == 'cuda':
+        if use_cuda_streams and self.device == "cuda":
             self.stream_manager = CUDAStreamManager(num_streams=3)
 
         # Load model
@@ -98,25 +98,28 @@ class DA3InferenceOptimized:
 
     def _setup_device(self, requested_device: str) -> str:
         """Setup and validate compute device."""
-        if requested_device not in ['cuda', 'cpu']:
+        if requested_device not in ["cuda", "cpu"]:
             raise ValueError(f"Invalid device: {requested_device}")
 
-        if requested_device == 'cuda':
+        if requested_device == "cuda":
             if not torch.cuda.is_available():
                 logger.warning("CUDA requested but not available, falling back to CPU")
-                return 'cpu'
+                return "cpu"
             else:
                 cuda_device = torch.cuda.get_device_name(0)
                 logger.info(f"Using CUDA device: {cuda_device}")
-                return 'cuda'
+                return "cuda"
 
-        return 'cpu'
+        return "cpu"
 
     def _load_model(self) -> None:
         """Load model based on selected backend."""
         if self.backend == InferenceBackend.PYTORCH:
             self._load_pytorch_model()
-        elif self.backend in [InferenceBackend.TENSORRT_FP16, InferenceBackend.TENSORRT_INT8]:
+        elif self.backend in [
+            InferenceBackend.TENSORRT_FP16,
+            InferenceBackend.TENSORRT_INT8,
+        ]:
             self._load_tensorrt_model()
         else:
             raise ValueError(f"Unsupported backend: {self.backend}")
@@ -130,8 +133,7 @@ class DA3InferenceOptimized:
 
             if self.cache_dir:
                 self._model = DepthAnything3.from_pretrained(
-                    self.model_name,
-                    cache_dir=self.cache_dir
+                    self.model_name, cache_dir=self.cache_dir
                 )
             else:
                 self._model = DepthAnything3.from_pretrained(self.model_name)
@@ -140,7 +142,7 @@ class DA3InferenceOptimized:
             self._model.eval()
 
             # Enable mixed precision for FP16 inference
-            if self.device == 'cuda':
+            if self.device == "cuda":
                 self._model = self._model.half()  # Convert to FP16
                 logger.info("Enabled FP16 mixed precision")
 
@@ -174,8 +176,7 @@ class DA3InferenceOptimized:
                 from torch2trt import TRTModule
             except ImportError:
                 raise ImportError(
-                    "torch2trt not installed. Install with: "
-                    "pip install torch2trt"
+                    "torch2trt not installed. Install with: " "pip install torch2trt"
                 )
 
             logger.info(f"Loading TensorRT model: {trt_path}")
@@ -184,10 +185,13 @@ class DA3InferenceOptimized:
             self._model = TRTModule()
             # Use weights_only=True for security (PyTorch 1.13+)
             try:
-                self._model.load_state_dict(torch.load(trt_path, weights_only=True))
+                state_dict = torch.load(trt_path, weights_only=True)
+                self._model.load_state_dict(state_dict)
             except TypeError:
                 # Fallback for older PyTorch versions
-                logger.warning("PyTorch version does not support weights_only parameter")
+                logger.warning(
+                    "PyTorch version does not support weights_only parameter"
+                )
                 self._model.load_state_dict(torch.load(trt_path))
 
             logger.info(f"TensorRT model loaded successfully ({self.backend.value})")
@@ -200,7 +204,7 @@ class DA3InferenceOptimized:
         image: np.ndarray,
         return_confidence: bool = True,
         return_camera_params: bool = False,
-        output_size: Optional[Tuple[int, int]] = None
+        output_size: Optional[Tuple[int, int]] = None,
     ) -> Dict[str, np.ndarray]:
         """
         Run optimized depth inference.
@@ -251,15 +255,10 @@ class DA3InferenceOptimized:
                 # Run inference based on backend
                 if self.backend == InferenceBackend.PYTORCH:
                     result = self._inference_pytorch(
-                        img_tensor,
-                        return_confidence,
-                        return_camera_params
+                        img_tensor, return_confidence, return_camera_params
                     )
                 else:
-                    result = self._inference_tensorrt(
-                        img_tensor,
-                        return_confidence
-                    )
+                    result = self._inference_tensorrt(img_tensor, return_confidence)
 
                 # Upsample to output size if needed
                 if self.enable_upsampling and output_size != self.model_input_size:
@@ -268,7 +267,7 @@ class DA3InferenceOptimized:
             return result
 
         except torch.cuda.OutOfMemoryError as e:
-            if self.device == 'cuda':
+            if self.device == "cuda":
                 torch.cuda.empty_cache()
             raise RuntimeError(
                 f"CUDA out of memory. Try reducing input size or "
@@ -281,48 +280,45 @@ class DA3InferenceOptimized:
         self,
         img_tensor: torch.Tensor,
         return_confidence: bool,
-        return_camera_params: bool
+        return_camera_params: bool,
     ) -> Dict[str, np.ndarray]:
         """Run PyTorch inference."""
         from PIL import Image
 
         # Convert tensor back to PIL for DA3 API
         # TODO: Modify DA3 to accept tensors directly
-        img_numpy = (img_tensor.squeeze(0).permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+        img_cpu = img_tensor.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        img_numpy = (img_cpu * 255).astype(np.uint8)
         pil_image = Image.fromarray(img_numpy)
 
         # Run inference
-        with torch.cuda.amp.autocast(enabled=(self.device == 'cuda')):
+        with torch.cuda.amp.autocast(enabled=(self.device == "cuda")):
             prediction = self._model.inference([pil_image])
 
         # Validate prediction
         if prediction is None:
             raise RuntimeError("Model returned None prediction")
 
-        if not hasattr(prediction, 'depth') or prediction.depth is None:
+        if not hasattr(prediction, "depth") or prediction.depth is None:
             raise RuntimeError("Model prediction missing depth output")
 
         if len(prediction.depth) == 0:
             raise RuntimeError("Model returned empty depth map")
 
         # Extract results
-        result = {
-            'depth': prediction.depth[0].astype(np.float32)
-        }
+        result = {"depth": prediction.depth[0].astype(np.float32)}
 
         if return_confidence:
-            result['confidence'] = prediction.conf[0].astype(np.float32)
+            result["confidence"] = prediction.conf[0].astype(np.float32)
 
         if return_camera_params:
-            result['extrinsics'] = prediction.extrinsics[0].astype(np.float32)
-            result['intrinsics'] = prediction.intrinsics[0].astype(np.float32)
+            result["extrinsics"] = prediction.extrinsics[0].astype(np.float32)
+            result["intrinsics"] = prediction.intrinsics[0].astype(np.float32)
 
         return result
 
     def _inference_tensorrt(
-        self,
-        img_tensor: torch.Tensor,
-        return_confidence: bool
+        self, img_tensor: torch.Tensor, return_confidence: bool
     ) -> Dict[str, np.ndarray]:
         """Run TensorRT inference."""
         # Run TensorRT inference
@@ -332,7 +328,7 @@ class DA3InferenceOptimized:
         # Assuming output is depth map, modify based on actual TRT model output
         if isinstance(output, torch.Tensor):
             depth = output.squeeze().cpu().numpy().astype(np.float32)
-            result = {'depth': depth}
+            result = {"depth": depth}
 
             # TensorRT models typically only output depth
             if return_confidence:
@@ -343,7 +339,7 @@ class DA3InferenceOptimized:
                     "Returning uniform confidence map."
                 )
                 confidence = np.ones_like(depth, dtype=np.float32)
-                result['confidence'] = confidence
+                result["confidence"] = confidence
 
         else:
             raise ValueError("Unexpected TensorRT output format")
@@ -351,15 +347,13 @@ class DA3InferenceOptimized:
         return result
 
     def _upsample_results(
-        self,
-        result: Dict[str, np.ndarray],
-        target_size: Tuple[int, int]
+        self, result: Dict[str, np.ndarray], target_size: Tuple[int, int]
     ) -> Dict[str, np.ndarray]:
         """Upsample depth and confidence to target size on GPU."""
         upsampled = {}
 
         for key, value in result.items():
-            if key in ['depth', 'confidence']:
+            if key in ["depth", "confidence"]:
                 # Upsample on GPU
                 upsampled[key] = self.upsampler.upsample_numpy(value, target_size)
             else:
@@ -370,13 +364,13 @@ class DA3InferenceOptimized:
 
     def get_gpu_memory_usage(self) -> Optional[Dict[str, float]]:
         """Get GPU memory usage statistics."""
-        if self.device == 'cuda':
+        if self.device == "cuda":
             return GPUMemoryMonitor.get_memory_stats()
         return None
 
     def clear_cache(self) -> None:
         """Clear CUDA cache."""
-        if self.device == 'cuda':
+        if self.device == "cuda":
             GPUMemoryMonitor.clear_cache()
 
     def cleanup(self) -> None:
@@ -393,14 +387,14 @@ class DA3InferenceOptimized:
         self.clear_cache()
 
         # Clean up GPU utilities
-        if hasattr(self, 'upsampler'):
+        if hasattr(self, "upsampler"):
             del self.upsampler
 
-        if hasattr(self, 'preprocessor'):
+        if hasattr(self, "preprocessor"):
             del self.preprocessor
 
-        if hasattr(self, 'stream_manager') and self.stream_manager is not None:
-            if hasattr(self.stream_manager, 'cleanup'):
+        if hasattr(self, "stream_manager") and self.stream_manager is not None:
+            if hasattr(self.stream_manager, "cleanup"):
                 self.stream_manager.cleanup()
 
         logger.info("DA3InferenceOptimized cleanup completed")
