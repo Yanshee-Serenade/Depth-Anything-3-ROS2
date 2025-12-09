@@ -30,6 +30,8 @@ docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
 
 ## Quick Start
 
+> **Important**: No pre-built Docker images are published to Docker Hub or any container registry. You must build the images locally using the commands below. Running `docker-compose pull` will fail.
+
 ### Option 1: Docker Compose (Recommended)
 
 #### CPU-Only Mode
