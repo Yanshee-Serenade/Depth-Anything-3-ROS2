@@ -477,6 +477,27 @@ Docker configuration files are provided for building and deploying on both CPU a
 
 > **Important**: No pre-built Docker images are published to Docker Hub or any container registry. You must build the images locally using `docker-compose build` or `docker-compose up` (which auto-builds).
 
+### Complete Docker Installation (3 Steps)
+
+```bash
+# Step 1: Clone the repository
+git clone https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper.git
+cd GerdsenAI-Depth-Anything-3-ROS2-Wrapper
+
+# Step 2: Build and run (choose GPU or CPU)
+docker-compose up -d depth-anything-3-gpu    # For GPU (requires nvidia-docker)
+# OR
+docker-compose up -d depth-anything-3-cpu    # For CPU-only
+
+# Step 3: Enter container and run the node
+docker exec -it da3_ros2_gpu bash            # For GPU container
+# OR
+docker exec -it da3_ros2_cpu bash            # For CPU container
+
+# Inside the container:
+ros2 run depth_anything_3_ros2 depth_anything_3_node --ros-args -p device:=cuda
+```
+
 ### Quick Start with Docker Compose
 
 ```bash
