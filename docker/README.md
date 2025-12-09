@@ -32,6 +32,27 @@ docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
 
 > **Important**: No pre-built Docker images are published to Docker Hub or any container registry. You must build the images locally using the commands below. Running `docker-compose pull` will fail.
 
+### Complete Docker Installation (3 Steps)
+
+```bash
+# Step 1: Clone the repository
+git clone https://github.com/GerdsenAI/GerdsenAI-Depth-Anything-3-ROS2-Wrapper.git
+cd GerdsenAI-Depth-Anything-3-ROS2-Wrapper
+
+# Step 2: Build and run (choose GPU or CPU)
+docker-compose up -d depth-anything-3-gpu    # For GPU (requires nvidia-docker)
+# OR
+docker-compose up -d depth-anything-3-cpu    # For CPU-only
+
+# Step 3: Enter container and run the node
+docker exec -it da3_ros2_gpu bash            # For GPU container
+# OR
+docker exec -it da3_ros2_cpu bash            # For CPU container
+
+# Inside the container:
+ros2 run depth_anything_3_ros2 depth_anything_3_node --ros-args -p device:=cuda
+```
+
 ### Option 1: Docker Compose (Recommended)
 
 #### CPU-Only Mode
