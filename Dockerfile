@@ -96,12 +96,12 @@ RUN if [ "$BUILD_TYPE" = "cuda-base" ]; then \
 
 # Install other Python dependencies
 RUN pip3 install --no-cache-dir \
-    transformers>=4.35.0 \
-    huggingface-hub>=0.19.0 \
-    opencv-python>=4.8.0 \
-    pillow>=10.0.0 \
-    numpy>=1.24.0,<2.0 \
-    timm>=0.9.0
+    "transformers>=4.35.0" \
+    "huggingface-hub>=0.19.0" \
+    "opencv-python>=4.8.0" \
+    "pillow>=10.0.0" \
+    "numpy>=1.24.0,<2.0" \
+    "timm>=0.9.0"
 
 # Install Depth Anything 3
 RUN pip3 install --no-cache-dir \

@@ -37,7 +37,7 @@ class DepthAnything3NodeOptimized(Node):
 
     def __init__(self):
         """Initialize the optimized Depth Anything 3 ROS2 node."""
-        super().__init__('depth_anything_3_optimized')
+        super().__init__("depth_anything_3_optimized")
 
         # Declare parameters
         self._declare_parameters()
@@ -67,7 +67,7 @@ class DepthAnything3NodeOptimized(Node):
                 enable_upsampling=self.enable_upsampling,
                 upsample_mode=self.upsample_mode,
                 use_cuda_streams=self.use_cuda_streams,
-                trt_model_path=self.trt_model_path
+                trt_model_path=self.trt_model_path,
             )
             self.get_logger().info("Optimized model loaded successfully")
         except Exception as e:
@@ -78,45 +78,29 @@ class DepthAnything3NodeOptimized(Node):
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
-            depth=self.queue_size
+            depth=self.queue_size,
         )
 
         # Create subscribers
         self.image_sub = self.create_subscription(
-            Image,
-            '~/image_raw',
-            self.image_callback,
-            qos
+            Image, "~/image_raw", self.image_callback, qos
         )
 
         self.camera_info_sub = self.create_subscription(
-            CameraInfo,
-            '~/camera_info',
-            self.camera_info_callback,
-            qos
+            CameraInfo, "~/camera_info", self.camera_info_callback, qos
         )
 
         # Create publishers
-        self.depth_pub = self.create_publisher(Image, '~/depth', 10)
+        self.depth_pub = self.create_publisher(Image, "~/depth", 10)
 
         if self.publish_colored:
-            self.depth_colored_pub = self.create_publisher(
-                Image,
-                '~/depth_colored',
-                10
-            )
+            self.depth_colored_pub = self.create_publisher(Image, "~/depth_colored", 10)
 
         if self.publish_confidence:
-            self.confidence_pub = self.create_publisher(
-                Image,
-                '~/confidence',
-                10
-            )
+            self.confidence_pub = self.create_publisher(Image, "~/confidence", 10)
 
         self.camera_info_pub = self.create_publisher(
-            CameraInfo,
-            '~/depth/camera_info',
-            10
+            CameraInfo, "~/depth/camera_info", 10
         )
 
         # Store latest camera info
@@ -146,81 +130,81 @@ class DepthAnything3NodeOptimized(Node):
     def _declare_parameters(self) -> None:
         """Declare all ROS2 parameters."""
         # Model configuration
-        self.declare_parameter('model_name', 'depth-anything/DA3-SMALL')
-        self.declare_parameter('backend', 'pytorch')  # pytorch, tensorrt_fp16, tensorrt_int8
-        self.declare_parameter('device', 'cuda')
-        self.declare_parameter('cache_dir', '')
-        self.declare_parameter('trt_model_path', '')
+        self.declare_parameter("model_name", "depth-anything/DA3-SMALL")
+        # Backend options: pytorch, tensorrt_fp16, tensorrt_int8
+        self.declare_parameter("backend", "pytorch")
+        self.declare_parameter("device", "cuda")
+        self.declare_parameter("cache_dir", "")
+        self.declare_parameter("trt_model_path", "")
 
         # Image processing
-        self.declare_parameter('model_input_height', 384)
-        self.declare_parameter('model_input_width', 384)
-        self.declare_parameter('output_height', 1080)
-        self.declare_parameter('output_width', 1920)
-        self.declare_parameter('input_encoding', 'bgr8')
+        self.declare_parameter("model_input_height", 384)
+        self.declare_parameter("model_input_width", 384)
+        self.declare_parameter("output_height", 1080)
+        self.declare_parameter("output_width", 1920)
+        self.declare_parameter("input_encoding", "bgr8")
 
         # GPU optimization
-        self.declare_parameter('enable_upsampling', True)
-        self.declare_parameter('upsample_mode', 'bilinear')
-        self.declare_parameter('use_cuda_streams', False)
+        self.declare_parameter("enable_upsampling", True)
+        self.declare_parameter("upsample_mode", "bilinear")
+        self.declare_parameter("use_cuda_streams", False)
 
         # Output configuration
-        self.declare_parameter('normalize_depth', True)
-        self.declare_parameter('publish_colored', True)
-        self.declare_parameter('publish_confidence', True)
-        self.declare_parameter('colormap', 'turbo')
-        self.declare_parameter('async_colorization', True)
-        self.declare_parameter('check_subscribers', True)
+        self.declare_parameter("normalize_depth", True)
+        self.declare_parameter("publish_colored", True)
+        self.declare_parameter("publish_confidence", True)
+        self.declare_parameter("colormap", "turbo")
+        self.declare_parameter("async_colorization", True)
+        self.declare_parameter("check_subscribers", True)
 
         # Performance
-        self.declare_parameter('queue_size', 1)
-        self.declare_parameter('log_inference_time', True)
+        self.declare_parameter("queue_size", 1)
+        self.declare_parameter("log_inference_time", True)
 
     def _load_parameters(self) -> None:
         """Load parameters from ROS2 parameter server."""
         # Model configuration
-        self.model_name = self.get_parameter('model_name').value
-        self.backend = self.get_parameter('backend').value
-        self.device = self.get_parameter('device').value
-        cache_dir_param = self.get_parameter('cache_dir').value
+        self.model_name = self.get_parameter("model_name").value
+        self.backend = self.get_parameter("backend").value
+        self.device = self.get_parameter("device").value
+        cache_dir_param = self.get_parameter("cache_dir").value
         self.cache_dir = cache_dir_param if cache_dir_param else None
-        trt_path_param = self.get_parameter('trt_model_path').value
+        trt_path_param = self.get_parameter("trt_model_path").value
         self.trt_model_path = trt_path_param if trt_path_param else None
 
         # Image processing
-        input_h = self.get_parameter('model_input_height').value
-        input_w = self.get_parameter('model_input_width').value
+        input_h = self.get_parameter("model_input_height").value
+        input_w = self.get_parameter("model_input_width").value
         self.model_input_size = (input_h, input_w)
 
-        output_h = self.get_parameter('output_height').value
-        output_w = self.get_parameter('output_width').value
+        output_h = self.get_parameter("output_height").value
+        output_w = self.get_parameter("output_width").value
         self.output_resolution = (output_h, output_w)
 
-        self.input_encoding = self.get_parameter('input_encoding').value
+        self.input_encoding = self.get_parameter("input_encoding").value
 
         # GPU optimization
-        self.enable_upsampling = self.get_parameter('enable_upsampling').value
-        self.upsample_mode = self.get_parameter('upsample_mode').value
-        self.use_cuda_streams = self.get_parameter('use_cuda_streams').value
+        self.enable_upsampling = self.get_parameter("enable_upsampling").value
+        self.upsample_mode = self.get_parameter("upsample_mode").value
+        self.use_cuda_streams = self.get_parameter("use_cuda_streams").value
 
         # Output configuration
-        self.normalize_depth_output = self.get_parameter('normalize_depth').value
-        self.publish_colored = self.get_parameter('publish_colored').value
-        self.publish_confidence = self.get_parameter('publish_confidence').value
-        self.colormap = self.get_parameter('colormap').value
-        self.async_colorization = self.get_parameter('async_colorization').value
-        self.check_subscribers = self.get_parameter('check_subscribers').value
+        self.normalize_depth_output = self.get_parameter("normalize_depth").value
+        self.publish_colored = self.get_parameter("publish_colored").value
+        self.publish_confidence = self.get_parameter("publish_confidence").value
+        self.colormap = self.get_parameter("colormap").value
+        self.async_colorization = self.get_parameter("async_colorization").value
+        self.check_subscribers = self.get_parameter("check_subscribers").value
 
         # Performance
-        self.queue_size = self.get_parameter('queue_size').value
-        self.log_inference_time = self.get_parameter('log_inference_time').value
+        self.queue_size = self.get_parameter("queue_size").value
+        self.log_inference_time = self.get_parameter("log_inference_time").value
 
     def _setup_async_colorization(self) -> None:
         """Setup async colorization thread."""
         self.colorization_queue = Queue(maxsize=2)
         self.colorization_thread = threading.Thread(
-            target=self._colorization_worker,
-            daemon=True
+            target=self._colorization_worker, daemon=True
         )
         self.colorization_thread.start()
         self.get_logger().info("Async colorization thread started")
@@ -239,27 +223,25 @@ class DepthAnything3NodeOptimized(Node):
 
                 # Colorize depth
                 colored_depth = colorize_depth(
-                    depth_map,
-                    colormap=self.colormap,
-                    normalize=True
+                    depth_map, colormap=self.colormap, normalize=True
                 )
 
                 # Publish with thread safety
                 try:
                     with self._shutdown_lock:
-                        if self._running and hasattr(self, 'depth_colored_pub'):
+                        if self._running and hasattr(self, "depth_colored_pub"):
                             colored_msg = self.bridge.cv2_to_imgmsg(
-                                colored_depth, encoding='bgr8'
+                                colored_depth, encoding="bgr8"
                             )
                             colored_msg.header = header
                             self.depth_colored_pub.publish(colored_msg)
                 except CvBridgeError as e:
-                    self.get_logger().error(f'Failed to publish colored depth: {e}')
+                    self.get_logger().error(f"Failed to publish colored depth: {e}")
 
             except Empty:
                 continue
             except Exception as e:
-                self.get_logger().error(f'Error in colorization worker: {e}')
+                self.get_logger().error(f"Error in colorization worker: {e}")
 
         self.get_logger().info("Colorization worker thread exiting")
 
@@ -278,14 +260,14 @@ class DepthAnything3NodeOptimized(Node):
         try:
             # Convert ROS Image to OpenCV format
             try:
-                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='rgb8')
+                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
             except CvBridgeError as e:
-                self.get_logger().error(f'CV Bridge conversion failed: {e}')
+                self.get_logger().error(f"CV Bridge conversion failed: {e}")
                 return
 
             # Validate converted image
             if cv_image is None or cv_image.size == 0:
-                self.get_logger().error('Received empty image after conversion')
+                self.get_logger().error("Received empty image after conversion")
                 return
 
             # Ensure correct format
@@ -299,16 +281,16 @@ class DepthAnything3NodeOptimized(Node):
                     cv_image,
                     return_confidence=self.publish_confidence,
                     return_camera_params=False,
-                    output_size=self.output_resolution
+                    output_size=self.output_resolution,
                 )
             except Exception as e:
-                self.get_logger().error(f'Inference failed: {e}')
+                self.get_logger().error(f"Inference failed: {e}")
                 return
 
             inference_time = time.time() - inference_start
 
             # Extract depth map
-            depth_map = result['depth']
+            depth_map = result["depth"]
 
             # Normalize if requested
             if self.normalize_depth_output:
@@ -318,8 +300,8 @@ class DepthAnything3NodeOptimized(Node):
             self._publish_depth(depth_map, msg.header)
 
             # Publish confidence map if requested
-            if self.publish_confidence and 'confidence' in result:
-                self._publish_confidence(result['confidence'], msg.header)
+            if self.publish_confidence and "confidence" in result:
+                self._publish_confidence(result["confidence"], msg.header)
 
             # Handle colored depth
             if self.publish_colored:
@@ -327,10 +309,13 @@ class DepthAnything3NodeOptimized(Node):
                 if self.check_subscribers:
                     if self.depth_colored_pub.get_subscription_count() == 0:
                         pass  # Skip colorization if no subscribers
-                    elif self.async_colorization and self.colorization_queue is not None:
+                    elif (
+                        self.async_colorization and self.colorization_queue is not None
+                    ):
                         # Async colorization (off critical path)
                         try:
-                            self.colorization_queue.put_nowait((depth_map.copy(), msg.header))
+                            item = (depth_map.copy(), msg.header)
+                            self.colorization_queue.put_nowait(item)
                         except Full:
                             # Queue full, skip this frame (OK for real-time)
                             pass
@@ -340,7 +325,8 @@ class DepthAnything3NodeOptimized(Node):
                 elif self.async_colorization and self.colorization_queue is not None:
                     # Always colorize async
                     try:
-                        self.colorization_queue.put_nowait((depth_map.copy(), msg.header))
+                        item = (depth_map.copy(), msg.header)
+                        self.colorization_queue.put_nowait(item)
                     except Full:
                         # Queue full, skip this frame (OK for real-time)
                         pass
@@ -351,6 +337,7 @@ class DepthAnything3NodeOptimized(Node):
             # Publish camera info (create a copy to avoid modifying original)
             if self.latest_camera_info is not None:
                 from copy import deepcopy
+
                 camera_info_msg = deepcopy(self.latest_camera_info)
                 camera_info_msg.header = msg.header
                 self.camera_info_pub.publish(camera_info_msg)
@@ -360,7 +347,7 @@ class DepthAnything3NodeOptimized(Node):
             self.metrics.update(inference_time, total_time)
 
         except Exception as e:
-            self.get_logger().error(f'Unexpected error in image callback: {e}')
+            self.get_logger().error(f"Unexpected error in image callback: {e}")
 
     def _normalize_depth_fast(self, depth: np.ndarray) -> np.ndarray:
         """Fast depth normalization."""
@@ -375,43 +362,33 @@ class DepthAnything3NodeOptimized(Node):
     def _publish_depth(self, depth_map: np.ndarray, header: Header) -> None:
         """Publish depth map."""
         try:
-            depth_msg = self.bridge.cv2_to_imgmsg(depth_map, encoding='32FC1')
+            depth_msg = self.bridge.cv2_to_imgmsg(depth_map, encoding="32FC1")
             depth_msg.header = header
             self.depth_pub.publish(depth_msg)
         except CvBridgeError as e:
-            self.get_logger().error(f'Failed to publish depth map: {e}')
+            self.get_logger().error(f"Failed to publish depth map: {e}")
 
-    def _publish_colored_depth(
-        self,
-        depth_map: np.ndarray,
-        header: Header
-    ) -> None:
+    def _publish_colored_depth(self, depth_map: np.ndarray, header: Header) -> None:
         """Publish colorized depth (synchronous)."""
         try:
             colored_depth = colorize_depth(
-                depth_map,
-                colormap=self.colormap,
-                normalize=True
+                depth_map, colormap=self.colormap, normalize=True
             )
 
-            colored_msg = self.bridge.cv2_to_imgmsg(colored_depth, encoding='bgr8')
+            colored_msg = self.bridge.cv2_to_imgmsg(colored_depth, encoding="bgr8")
             colored_msg.header = header
             self.depth_colored_pub.publish(colored_msg)
         except Exception as e:
-            self.get_logger().error(f'Failed to publish colored depth: {e}')
+            self.get_logger().error(f"Failed to publish colored depth: {e}")
 
-    def _publish_confidence(
-        self,
-        confidence_map: np.ndarray,
-        header: Header
-    ) -> None:
+    def _publish_confidence(self, confidence_map: np.ndarray, header: Header) -> None:
         """Publish confidence map."""
         try:
-            conf_msg = self.bridge.cv2_to_imgmsg(confidence_map, encoding='32FC1')
+            conf_msg = self.bridge.cv2_to_imgmsg(confidence_map, encoding="32FC1")
             conf_msg.header = header
             self.confidence_pub.publish(conf_msg)
         except CvBridgeError as e:
-            self.get_logger().error(f'Failed to publish confidence map: {e}')
+            self.get_logger().error(f"Failed to publish confidence map: {e}")
 
     def _log_performance(self) -> None:
         """Log performance metrics."""
@@ -447,9 +424,7 @@ class DepthAnything3NodeOptimized(Node):
             self.colorization_thread.join(timeout=5.0)
 
             if self.colorization_thread.is_alive():
-                self.get_logger().warning(
-                    "Colorization thread did not exit cleanly"
-                )
+                self.get_logger().warning("Colorization thread did not exit cleanly")
 
         # Clean up queue
         if self.colorization_queue is not None:
@@ -461,8 +436,8 @@ class DepthAnything3NodeOptimized(Node):
                     break
 
         # Clean up model with explicit cleanup method
-        if hasattr(self, 'model'):
-            if hasattr(self.model, 'cleanup'):
+        if hasattr(self, "model"):
+            if hasattr(self.model, "cleanup"):
                 try:
                     self.model.cleanup()
                 except Exception as e:
@@ -488,5 +463,5 @@ def main(args=None):
             rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

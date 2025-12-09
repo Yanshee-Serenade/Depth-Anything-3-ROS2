@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, W503, Q000, I100, I101, I201, D200, D401
+exclude = .venv, build, install, log, .git, __pycache__

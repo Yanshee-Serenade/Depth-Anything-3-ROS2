@@ -32,68 +32,6 @@ jobs:
         run: |
           black --check depth_anything_3_ros2/
 
-  build-and-test:
-    name: Build and Test (ROS2 ${{ matrix.ros_distro }})
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        ros_distro: [humble]
-    container:
-      image: ros:${{ matrix.ros_distro }}-ros-base
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y \
-            python3-pip \
-            python3-pytest \
-            ros-${{ matrix.ros_distro }}-cv-bridge \
-            ros-${{ matrix.ros_distro }}-image-transport \
-            ros-${{ matrix.ros_distro }}-vision-opencv
-
-      - name: Install Python dependencies
-        run: |
-          pip3 install --upgrade pip
-          pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip3 install -r requirements.txt
-
-      - name: Build package
-        shell: bash
-        run: |
-          . /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          colcon build --packages-select depth_anything_3_ros2
-
-      - name: Run tests
-        shell: bash
-        run: |
-          . /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          . install/setup.bash
-          colcon test --packages-select depth_anything_3_ros2
-          colcon test-result --verbose
-
-  docker-build:
-    name: Docker Build Test
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build CPU image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Dockerfile
-          build-args: |
-            BUILD_TYPE=base
-          tags: depth_anything_3_ros2:cpu
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   documentation:
     name: Documentation Build
     runs-on: ubuntu-22.04

@@ -17,11 +17,7 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 
 from .da3_inference import DA3InferenceWrapper
-from .utils import (
-    normalize_depth,
-    colorize_depth,
-    PerformanceMetrics
-)
+from .utils import normalize_depth, colorize_depth, PerformanceMetrics
 
 
 class DepthAnything3Node(Node):
@@ -34,7 +30,7 @@ class DepthAnything3Node(Node):
 
     def __init__(self):
         """Initialize the Depth Anything 3 ROS2 node."""
-        super().__init__('depth_anything_3')
+        super().__init__("depth_anything_3")
 
         # Declare parameters
         self._declare_parameters()
@@ -54,9 +50,7 @@ class DepthAnything3Node(Node):
         )
         try:
             self.model = DA3InferenceWrapper(
-                model_name=self.model_name,
-                device=self.device,
-                cache_dir=self.cache_dir
+                model_name=self.model_name, device=self.device, cache_dir=self.cache_dir
             )
             self.get_logger().info("Model loaded successfully")
         except Exception as e:
@@ -67,45 +61,29 @@ class DepthAnything3Node(Node):
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
-            depth=self.queue_size
+            depth=self.queue_size,
         )
 
         # Create subscribers
         self.image_sub = self.create_subscription(
-            Image,
-            '~/image_raw',
-            self.image_callback,
-            qos
+            Image, "~/image_raw", self.image_callback, qos
         )
 
         self.camera_info_sub = self.create_subscription(
-            CameraInfo,
-            '~/camera_info',
-            self.camera_info_callback,
-            qos
+            CameraInfo, "~/camera_info", self.camera_info_callback, qos
         )
 
         # Create publishers
-        self.depth_pub = self.create_publisher(Image, '~/depth', 10)
+        self.depth_pub = self.create_publisher(Image, "~/depth", 10)
 
         if self.publish_colored:
-            self.depth_colored_pub = self.create_publisher(
-                Image,
-                '~/depth_colored',
-                10
-            )
+            self.depth_colored_pub = self.create_publisher(Image, "~/depth_colored", 10)
 
         if self.publish_confidence:
-            self.confidence_pub = self.create_publisher(
-                Image,
-                '~/confidence',
-                10
-            )
+            self.confidence_pub = self.create_publisher(Image, "~/confidence", 10)
 
         self.camera_info_pub = self.create_publisher(
-            CameraInfo,
-            '~/depth/camera_info',
-            10
+            CameraInfo, "~/depth/camera_info", 10
         )
 
         # Store latest camera info
@@ -122,53 +100,53 @@ class DepthAnything3Node(Node):
     def _declare_parameters(self) -> None:
         """Declare all ROS2 parameters with default values."""
         # Model configuration
-        self.declare_parameter('model_name', 'depth-anything/DA3-BASE')
-        self.declare_parameter('device', 'cuda')
-        self.declare_parameter('cache_dir', '')
+        self.declare_parameter("model_name", "depth-anything/DA3-BASE")
+        self.declare_parameter("device", "cuda")
+        self.declare_parameter("cache_dir", "")
 
         # Image processing
-        self.declare_parameter('inference_height', 518)
-        self.declare_parameter('inference_width', 518)
-        self.declare_parameter('input_encoding', 'bgr8')
+        self.declare_parameter("inference_height", 518)
+        self.declare_parameter("inference_width", 518)
+        self.declare_parameter("input_encoding", "bgr8")
 
         # Output configuration
-        self.declare_parameter('normalize_depth', True)
-        self.declare_parameter('publish_colored', True)
-        self.declare_parameter('publish_confidence', True)
-        self.declare_parameter('colormap', 'turbo')
+        self.declare_parameter("normalize_depth", True)
+        self.declare_parameter("publish_colored", True)
+        self.declare_parameter("publish_confidence", True)
+        self.declare_parameter("colormap", "turbo")
 
         # Performance
-        self.declare_parameter('queue_size', 1)
-        self.declare_parameter('processing_threads', 1)
+        self.declare_parameter("queue_size", 1)
+        self.declare_parameter("processing_threads", 1)
 
         # Logging
-        self.declare_parameter('log_inference_time', False)
+        self.declare_parameter("log_inference_time", False)
 
     def _load_parameters(self) -> None:
         """Load parameters from ROS2 parameter server."""
         # Model configuration
-        self.model_name = self.get_parameter('model_name').value
-        self.device = self.get_parameter('device').value
-        cache_dir_param = self.get_parameter('cache_dir').value
+        self.model_name = self.get_parameter("model_name").value
+        self.device = self.get_parameter("device").value
+        cache_dir_param = self.get_parameter("cache_dir").value
         self.cache_dir = cache_dir_param if cache_dir_param else None
 
         # Image processing
-        self.inference_height = self.get_parameter('inference_height').value
-        self.inference_width = self.get_parameter('inference_width').value
-        self.input_encoding = self.get_parameter('input_encoding').value
+        self.inference_height = self.get_parameter("inference_height").value
+        self.inference_width = self.get_parameter("inference_width").value
+        self.input_encoding = self.get_parameter("input_encoding").value
 
         # Output configuration
-        self.normalize_depth_output = self.get_parameter('normalize_depth').value
-        self.publish_colored = self.get_parameter('publish_colored').value
-        self.publish_confidence = self.get_parameter('publish_confidence').value
-        self.colormap = self.get_parameter('colormap').value
+        self.normalize_depth_output = self.get_parameter("normalize_depth").value
+        self.publish_colored = self.get_parameter("publish_colored").value
+        self.publish_confidence = self.get_parameter("publish_confidence").value
+        self.colormap = self.get_parameter("colormap").value
 
         # Performance
-        self.queue_size = self.get_parameter('queue_size').value
-        self.processing_threads = self.get_parameter('processing_threads').value
+        self.queue_size = self.get_parameter("queue_size").value
+        self.processing_threads = self.get_parameter("processing_threads").value
 
         # Logging
-        self.log_inference_time = self.get_parameter('log_inference_time').value
+        self.log_inference_time = self.get_parameter("log_inference_time").value
 
     def camera_info_callback(self, msg: CameraInfo) -> None:
         """
@@ -191,15 +169,15 @@ class DepthAnything3Node(Node):
         try:
             # Convert ROS Image to OpenCV format
             try:
-                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='rgb8')
+                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
             except CvBridgeError as e:
-                self.get_logger().error(f'CV Bridge conversion failed: {e}')
+                self.get_logger().error(f"CV Bridge conversion failed: {e}")
                 return
 
             # Ensure image is in correct format (RGB, uint8)
             if cv_image.dtype != np.uint8:
                 self.get_logger().warn(
-                    f'Image dtype is {cv_image.dtype}, converting to uint8'
+                    f"Image dtype is {cv_image.dtype}, converting to uint8"
                 )
                 cv_image = cv_image.astype(np.uint8)
 
@@ -209,16 +187,16 @@ class DepthAnything3Node(Node):
                 result = self.model.inference(
                     cv_image,
                     return_confidence=self.publish_confidence,
-                    return_camera_params=False
+                    return_camera_params=False,
                 )
             except Exception as e:
-                self.get_logger().error(f'Inference failed: {e}')
+                self.get_logger().error(f"Inference failed: {e}")
                 return
 
             inference_time = time.time() - inference_start
 
             # Extract depth map
-            depth_map = result['depth']
+            depth_map = result["depth"]
 
             # Normalize if requested
             if self.normalize_depth_output:
@@ -232,8 +210,8 @@ class DepthAnything3Node(Node):
                 self._publish_colored_depth(depth_map, msg.header)
 
             # Publish confidence map
-            if self.publish_confidence and 'confidence' in result:
-                self._publish_confidence(result['confidence'], msg.header)
+            if self.publish_confidence and "confidence" in result:
+                self._publish_confidence(result["confidence"], msg.header)
 
             # Publish camera info
             if self.latest_camera_info is not None:
@@ -246,7 +224,7 @@ class DepthAnything3Node(Node):
             self.metrics.update(inference_time, total_time)
 
         except Exception as e:
-            self.get_logger().error(f'Unexpected error in image callback: {e}')
+            self.get_logger().error(f"Unexpected error in image callback: {e}")
 
     def _publish_depth(self, depth_map: np.ndarray, header: Header) -> None:
         """
@@ -257,17 +235,13 @@ class DepthAnything3Node(Node):
             header: Original image header for timestamp and frame_id
         """
         try:
-            depth_msg = self.bridge.cv2_to_imgmsg(depth_map, encoding='32FC1')
+            depth_msg = self.bridge.cv2_to_imgmsg(depth_map, encoding="32FC1")
             depth_msg.header = header
             self.depth_pub.publish(depth_msg)
         except CvBridgeError as e:
-            self.get_logger().error(f'Failed to publish depth map: {e}')
+            self.get_logger().error(f"Failed to publish depth map: {e}")
 
-    def _publish_colored_depth(
-        self,
-        depth_map: np.ndarray,
-        header: Header
-    ) -> None:
+    def _publish_colored_depth(self, depth_map: np.ndarray, header: Header) -> None:
         """
         Publish colorized depth visualization.
 
@@ -278,23 +252,17 @@ class DepthAnything3Node(Node):
         try:
             # Colorize depth
             colored_depth = colorize_depth(
-                depth_map,
-                colormap=self.colormap,
-                normalize=True
+                depth_map, colormap=self.colormap, normalize=True
             )
 
             # Convert to ROS message
-            colored_msg = self.bridge.cv2_to_imgmsg(colored_depth, encoding='bgr8')
+            colored_msg = self.bridge.cv2_to_imgmsg(colored_depth, encoding="bgr8")
             colored_msg.header = header
             self.depth_colored_pub.publish(colored_msg)
         except Exception as e:
-            self.get_logger().error(f'Failed to publish colored depth: {e}')
+            self.get_logger().error(f"Failed to publish colored depth: {e}")
 
-    def _publish_confidence(
-        self,
-        confidence_map: np.ndarray,
-        header: Header
-    ) -> None:
+    def _publish_confidence(self, confidence_map: np.ndarray, header: Header) -> None:
         """
         Publish confidence map.
 
@@ -303,11 +271,11 @@ class DepthAnything3Node(Node):
             header: Original image header for timestamp and frame_id
         """
         try:
-            conf_msg = self.bridge.cv2_to_imgmsg(confidence_map, encoding='32FC1')
+            conf_msg = self.bridge.cv2_to_imgmsg(confidence_map, encoding="32FC1")
             conf_msg.header = header
             self.confidence_pub.publish(conf_msg)
         except CvBridgeError as e:
-            self.get_logger().error(f'Failed to publish confidence map: {e}')
+            self.get_logger().error(f"Failed to publish confidence map: {e}")
 
     def _log_performance(self) -> None:
         """Log performance metrics periodically."""
@@ -332,7 +300,7 @@ class DepthAnything3Node(Node):
     def destroy_node(self) -> None:
         """Clean up resources on node shutdown."""
         self.get_logger().info("Shutting down Depth Anything 3 node")
-        if hasattr(self, 'model'):
+        if hasattr(self, "model"):
             del self.model
         super().destroy_node()
 
@@ -358,5 +326,5 @@ def main(args=None):
             rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

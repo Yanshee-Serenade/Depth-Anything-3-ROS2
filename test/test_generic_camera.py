@@ -6,7 +6,7 @@ demonstrating camera-agnostic design.
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 import numpy as np
 
 import rclpy
@@ -32,7 +32,7 @@ class TestGenericCamera(unittest.TestCase):
         height: int,
         width: int,
         encoding: str,
-        frame_id: str = 'camera_optical_frame'
+        frame_id: str = "camera_optical_frame",
     ) -> Image:
         """
         Create a test Image message.
@@ -55,10 +55,12 @@ class TestGenericCamera(unittest.TestCase):
         msg.is_bigendian = 0
 
         # Create appropriate test data based on encoding
-        if encoding in ['bgr8', 'rgb8']:
+        if encoding in ["bgr8", "rgb8"]:
             channels = 3
-            test_data = np.random.randint(0, 255, (height, width, channels), dtype=np.uint8)
-        elif encoding == 'mono8':
+            test_data = np.random.randint(
+                0, 255, (height, width, channels), dtype=np.uint8
+            )
+        elif encoding == "mono8":
             channels = 1
             test_data = np.random.randint(0, 255, (height, width), dtype=np.uint8)
         else:
@@ -69,15 +71,15 @@ class TestGenericCamera(unittest.TestCase):
 
         return msg
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_bgr8_encoding(self, mock_wrapper):
         """Test processing BGR8 encoded images."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
 
         mock_model = MagicMock()
         mock_result = {
-            'depth': np.random.rand(480, 640).astype(np.float32),
-            'confidence': np.random.rand(480, 640).astype(np.float32)
+            "depth": np.random.rand(480, 640).astype(np.float32),
+            "confidence": np.random.rand(480, 640).astype(np.float32),
         }
         mock_model.inference.return_value = mock_result
         mock_wrapper.return_value = mock_model
@@ -85,7 +87,7 @@ class TestGenericCamera(unittest.TestCase):
         node = DepthAnything3Node()
 
         # Create BGR8 test message
-        msg = self._create_image_msg(480, 640, 'bgr8')
+        msg = self._create_image_msg(480, 640, "bgr8")
         msg.header.stamp = node.get_clock().now().to_msg()
 
         # Process message
@@ -96,15 +98,15 @@ class TestGenericCamera(unittest.TestCase):
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_rgb8_encoding(self, mock_wrapper):
         """Test processing RGB8 encoded images."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
 
         mock_model = MagicMock()
         mock_result = {
-            'depth': np.random.rand(480, 640).astype(np.float32),
-            'confidence': np.random.rand(480, 640).astype(np.float32)
+            "depth": np.random.rand(480, 640).astype(np.float32),
+            "confidence": np.random.rand(480, 640).astype(np.float32),
         }
         mock_model.inference.return_value = mock_result
         mock_wrapper.return_value = mock_model
@@ -112,7 +114,7 @@ class TestGenericCamera(unittest.TestCase):
         node = DepthAnything3Node()
 
         # Create RGB8 test message
-        msg = self._create_image_msg(480, 640, 'rgb8')
+        msg = self._create_image_msg(480, 640, "rgb8")
         msg.header.stamp = node.get_clock().now().to_msg()
 
         # Process message
@@ -123,7 +125,7 @@ class TestGenericCamera(unittest.TestCase):
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_different_image_sizes(self, mock_wrapper):
         """Test processing images of different sizes."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
@@ -135,19 +137,19 @@ class TestGenericCamera(unittest.TestCase):
 
         # Test various common camera resolutions
         resolutions = [
-            (480, 640),   # VGA
+            (480, 640),  # VGA
             (720, 1280),  # HD
-            (1080, 1920), # Full HD
+            (1080, 1920),  # Full HD
         ]
 
         for height, width in resolutions:
             mock_result = {
-                'depth': np.random.rand(height, width).astype(np.float32),
-                'confidence': np.random.rand(height, width).astype(np.float32)
+                "depth": np.random.rand(height, width).astype(np.float32),
+                "confidence": np.random.rand(height, width).astype(np.float32),
             }
             mock_model.inference.return_value = mock_result
 
-            msg = self._create_image_msg(height, width, 'rgb8')
+            msg = self._create_image_msg(height, width, "rgb8")
             msg.header.stamp = node.get_clock().now().to_msg()
 
             # Should handle different sizes without errors
@@ -155,15 +157,15 @@ class TestGenericCamera(unittest.TestCase):
 
         node.destroy_node()
 
-    @patch('depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper')
+    @patch("depth_anything_3_ros2.depth_anything_3_node.DA3InferenceWrapper")
     def test_different_frame_ids(self, mock_wrapper):
         """Test that node handles different frame IDs correctly."""
         from depth_anything_3_ros2.depth_anything_3_node import DepthAnything3Node
 
         mock_model = MagicMock()
         mock_result = {
-            'depth': np.random.rand(480, 640).astype(np.float32),
-            'confidence': np.random.rand(480, 640).astype(np.float32)
+            "depth": np.random.rand(480, 640).astype(np.float32),
+            "confidence": np.random.rand(480, 640).astype(np.float32),
         }
         mock_model.inference.return_value = mock_result
         mock_wrapper.return_value = mock_model
@@ -172,14 +174,14 @@ class TestGenericCamera(unittest.TestCase):
 
         # Test various frame IDs from different cameras
         frame_ids = [
-            'camera_optical_frame',
-            'zed_left_camera_optical_frame',
-            'camera_color_optical_frame',
-            'usb_cam_optical_frame',
+            "camera_optical_frame",
+            "zed_left_camera_optical_frame",
+            "camera_color_optical_frame",
+            "usb_cam_optical_frame",
         ]
 
         for frame_id in frame_ids:
-            msg = self._create_image_msg(480, 640, 'rgb8', frame_id)
+            msg = self._create_image_msg(480, 640, "rgb8", frame_id)
             msg.header.stamp = node.get_clock().now().to_msg()
 
             # Should handle different frame IDs without errors
@@ -188,5 +190,5 @@ class TestGenericCamera(unittest.TestCase):
         node.destroy_node()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

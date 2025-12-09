@@ -10,8 +10,9 @@ import numpy as np
 import cv2
 
 
-def normalize_depth(depth: np.ndarray, min_val: Optional[float] = None,
-                    max_val: Optional[float] = None) -> np.ndarray:
+def normalize_depth(
+    depth: np.ndarray, min_val: Optional[float] = None, max_val: Optional[float] = None
+) -> np.ndarray:
     """
     Normalize depth map to [0, 1] range.
 
@@ -37,9 +38,7 @@ def normalize_depth(depth: np.ndarray, min_val: Optional[float] = None,
 
 
 def colorize_depth(
-    depth: np.ndarray,
-    colormap: str = 'turbo',
-    normalize: bool = True
+    depth: np.ndarray, colormap: str = "turbo", normalize: bool = True
 ) -> np.ndarray:
     """
     Colorize depth map for visualization.
@@ -58,21 +57,21 @@ def colorize_depth(
     """
     # Map colormap names to OpenCV constants
     colormap_dict = {
-        'turbo': cv2.COLORMAP_TURBO,
-        'viridis': cv2.COLORMAP_VIRIDIS,
-        'plasma': cv2.COLORMAP_PLASMA,
-        'magma': cv2.COLORMAP_MAGMA,
-        'jet': cv2.COLORMAP_JET,
-        'hot': cv2.COLORMAP_HOT,
-        'cool': cv2.COLORMAP_COOL,
-        'spring': cv2.COLORMAP_SPRING,
-        'summer': cv2.COLORMAP_SUMMER,
-        'autumn': cv2.COLORMAP_AUTUMN,
-        'winter': cv2.COLORMAP_WINTER,
-        'bone': cv2.COLORMAP_BONE,
-        'hsv': cv2.COLORMAP_HSV,
-        'parula': cv2.COLORMAP_PARULA,
-        'inferno': cv2.COLORMAP_INFERNO,
+        "turbo": cv2.COLORMAP_TURBO,
+        "viridis": cv2.COLORMAP_VIRIDIS,
+        "plasma": cv2.COLORMAP_PLASMA,
+        "magma": cv2.COLORMAP_MAGMA,
+        "jet": cv2.COLORMAP_JET,
+        "hot": cv2.COLORMAP_HOT,
+        "cool": cv2.COLORMAP_COOL,
+        "spring": cv2.COLORMAP_SPRING,
+        "summer": cv2.COLORMAP_SUMMER,
+        "autumn": cv2.COLORMAP_AUTUMN,
+        "winter": cv2.COLORMAP_WINTER,
+        "bone": cv2.COLORMAP_BONE,
+        "hsv": cv2.COLORMAP_HSV,
+        "parula": cv2.COLORMAP_PARULA,
+        "inferno": cv2.COLORMAP_INFERNO,
     }
 
     if colormap.lower() not in colormap_dict:
@@ -100,7 +99,7 @@ def resize_image(
     image: np.ndarray,
     target_size: Tuple[int, int],
     keep_aspect_ratio: bool = True,
-    interpolation: int = cv2.INTER_LINEAR
+    interpolation: int = cv2.INTER_LINEAR,
 ) -> np.ndarray:
     """
     Resize image to target size.
@@ -135,7 +134,7 @@ def resize_image(
         # Center the resized image in padded image
         y_offset = (target_h - new_h) // 2
         x_offset = (target_w - new_w) // 2
-        padded[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = resized
+        padded[y_offset : y_offset + new_h, x_offset : x_offset + new_w] = resized
 
         return padded
     else:
@@ -144,8 +143,7 @@ def resize_image(
 
 
 def depth_to_meters(
-    depth: np.ndarray,
-    depth_range: Tuple[float, float] = (0.1, 10.0)
+    depth: np.ndarray, depth_range: Tuple[float, float] = (0.1, 10.0)
 ) -> np.ndarray:
     """
     Convert normalized depth [0, 1] to metric depth in meters.
@@ -162,8 +160,7 @@ def depth_to_meters(
 
 
 def compute_confidence_mask(
-    confidence: np.ndarray,
-    threshold: float = 0.5
+    confidence: np.ndarray, threshold: float = 0.5
 ) -> np.ndarray:
     """
     Compute binary confidence mask.
@@ -223,10 +220,10 @@ class PerformanceMetrics:
         """
         if not self.inference_times:
             return {
-                'avg_inference_ms': 0.0,
-                'avg_total_ms': 0.0,
-                'fps': 0.0,
-                'frame_count': 0
+                "avg_inference_ms": 0.0,
+                "avg_total_ms": 0.0,
+                "fps": 0.0,
+                "frame_count": 0,
             }
 
         avg_inference = np.mean(self.inference_times) * 1000  # Convert to ms
@@ -234,10 +231,10 @@ class PerformanceMetrics:
         fps = 1.0 / np.mean(self.total_times) if np.mean(self.total_times) > 0 else 0.0
 
         return {
-            'avg_inference_ms': avg_inference,
-            'avg_total_ms': avg_total,
-            'fps': fps,
-            'frame_count': self.frame_count
+            "avg_inference_ms": avg_inference,
+            "avg_total_ms": avg_total,
+            "fps": fps,
+            "frame_count": self.frame_count,
         }
 
     def reset(self) -> None:
