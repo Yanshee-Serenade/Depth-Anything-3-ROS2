@@ -27,11 +27,7 @@ class GPUDepthUpsampler:
     All operations are performed on GPU to minimize CPU-GPU transfers.
     """
 
-    def __init__(
-        self,
-        mode: str = 'bilinear',
-        device: str = 'cuda'
-    ):
+    def __init__(self, mode: str = "bilinear", device: str = "cuda"):
         """
         Initialize GPU upsampler.
 
@@ -42,23 +38,21 @@ class GPUDepthUpsampler:
         self.mode = mode
         self.device = device
 
-        if mode not in ['bilinear', 'bicubic', 'nearest']:
+        if mode not in ["bilinear", "bicubic", "nearest"]:
             raise ValueError(
                 f"Invalid mode '{mode}'. "
                 f"Must be 'bilinear', 'bicubic', or 'nearest'"
             )
 
         # Check CUDA availability
-        if device == 'cuda' and not torch.cuda.is_available():
+        if device == "cuda" and not torch.cuda.is_available():
             logger.warning("CUDA not available, falling back to CPU")
-            self.device = 'cpu'
+            self.device = "cpu"
 
         logger.info(f"GPU upsampler initialized: mode={mode}, device={self.device}")
 
     def upsample_tensor(
-        self,
-        tensor: torch.Tensor,
-        target_size: Tuple[int, int]
+        self, tensor: torch.Tensor, target_size: Tuple[int, int]
     ) -> torch.Tensor:
         """
         Upsample a tensor on GPU.
@@ -93,15 +87,13 @@ class GPUDepthUpsampler:
             tensor,
             size=target_size,
             mode=self.mode,
-            align_corners=False if self.mode != 'nearest' else None
+            align_corners=False if self.mode != "nearest" else None,
         )
 
         return upsampled
 
     def upsample_numpy(
-        self,
-        array: np.ndarray,
-        target_size: Tuple[int, int]
+        self, array: np.ndarray, target_size: Tuple[int, int]
     ) -> np.ndarray:
         """
         Upsample a numpy array using GPU acceleration.
@@ -145,7 +137,7 @@ class GPUDepthUpsampler:
             tensor,
             size=target_size,
             mode=self.mode,
-            align_corners=False if self.mode != 'nearest' else None
+            align_corners=False if self.mode != "nearest" else None,
         )
 
         # Convert back to numpy
@@ -165,11 +157,7 @@ class GPUImagePreprocessor:
     to minimize CPU-GPU transfer overhead.
     """
 
-    def __init__(
-        self,
-        target_size: Tuple[int, int] = (384, 384),
-        device: str = 'cuda'
-    ):
+    def __init__(self, target_size: Tuple[int, int] = (384, 384), device: str = "cuda"):
         """
         Initialize GPU preprocessor.
 
@@ -180,14 +168,12 @@ class GPUImagePreprocessor:
         self.target_size = target_size
         self.device = device
 
-        if device == 'cuda' and not torch.cuda.is_available():
+        if device == "cuda" and not torch.cuda.is_available():
             logger.warning("CUDA not available, falling back to CPU")
-            self.device = 'cpu'
+            self.device = "cpu"
 
     def preprocess(
-        self,
-        image: np.ndarray,
-        return_tensor: bool = True
+        self, image: np.ndarray, return_tensor: bool = True
     ) -> Union[torch.Tensor, np.ndarray]:
         """
         Preprocess image for model input on GPU.
@@ -216,10 +202,7 @@ class GPUImagePreprocessor:
         # Resize to target size
         if tensor.shape[2:] != self.target_size:
             tensor = F.interpolate(
-                tensor,
-                size=self.target_size,
-                mode='bilinear',
-                align_corners=False
+                tensor, size=self.target_size, mode="bilinear", align_corners=False
             )
 
         if return_tensor:
@@ -303,9 +286,7 @@ def tensor_to_numpy_gpu(tensor: torch.Tensor) -> np.ndarray:
 
 
 def numpy_to_tensor_gpu(
-    array: np.ndarray,
-    device: str = 'cuda',
-    dtype: torch.dtype = torch.float32
+    array: np.ndarray, device: str = "cuda", dtype: torch.dtype = torch.float32
 ) -> torch.Tensor:
     """
     Convert numpy array to GPU tensor with minimal overhead.
@@ -365,27 +346,27 @@ class GPUMemoryMonitor:
         """
         if not torch.cuda.is_available():
             return {
-                'allocated_mb': 0.0,
-                'reserved_mb': 0.0,
-                'free_mb': 0.0,
-                'total_mb': 0.0
+                "allocated_mb": 0.0,
+                "reserved_mb": 0.0,
+                "free_mb": 0.0,
+                "total_mb": 0.0,
             }
 
         # Use current device instead of hardcoded device 0
         device_id = torch.cuda.current_device()
 
-        allocated = torch.cuda.memory_allocated(device_id) / (1024 ** 2)
-        reserved = torch.cuda.memory_reserved(device_id) / (1024 ** 2)
+        allocated = torch.cuda.memory_allocated(device_id) / (1024**2)
+        reserved = torch.cuda.memory_reserved(device_id) / (1024**2)
 
         # Get total memory for current device
-        total = torch.cuda.get_device_properties(device_id).total_memory / (1024 ** 2)
+        total = torch.cuda.get_device_properties(device_id).total_memory / (1024**2)
         free = total - allocated
 
         return {
-            'allocated_mb': allocated,
-            'reserved_mb': reserved,
-            'free_mb': free,
-            'total_mb': total
+            "allocated_mb": allocated,
+            "reserved_mb": reserved,
+            "free_mb": free,
+            "total_mb": total,
         }
 
     @staticmethod
