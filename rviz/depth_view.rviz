@@ -55,7 +55,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /camera/depth_anything_3/image_raw
+        Value: /camera/image_raw
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
@@ -69,7 +69,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /camera/depth_anything_3/depth
+        Value: /depth_anything_3/depth
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
@@ -83,7 +83,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /camera/depth_anything_3/depth_colored
+        Value: /depth_anything_3/depth_colored
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
@@ -97,7 +97,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /camera/depth_anything_3/confidence
+        Value: /depth_anything_3/confidence
       Value: true
   Enabled: true
   Global Options:
