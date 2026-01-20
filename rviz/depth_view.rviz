@@ -90,6 +90,20 @@ Visualization Manager:
       Max Value: 1
       Median window: 5
       Min Value: 0
+      Name: Object Annotation
+      Normalize Range: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /yolo_world/annotated_image
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
       Name: Confidence Map
       Normalize Range: true
       Topic:
