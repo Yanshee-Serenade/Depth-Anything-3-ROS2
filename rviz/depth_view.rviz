@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Point Cloud1
+        - /YOLO Markers1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz_common/Selection
@@ -113,10 +115,33 @@ Visualization Manager:
         Reliability Policy: Best Effort
         Value: /depth_anything_3/confidence
       Value: true
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: Point Cloud
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /point_cloud
+      Style: Flat Squares
+      Size (Pixels): 3
+      Color Transformer: Intensity
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: YOLO Markers
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /yolo_world/markers
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: camera_optical_frame
+    Fixed Frame: camera
     Frame Rate: 30
   Name: root
   Tools:
