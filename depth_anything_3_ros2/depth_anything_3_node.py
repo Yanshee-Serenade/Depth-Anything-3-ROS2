@@ -89,6 +89,11 @@ class DepthAnything3Node(Node):
         # Store latest camera info
         self.latest_camera_info: Optional[CameraInfo] = None
 
+        # Rate limiting (Hz)
+        assert self.target_hz is not None, "Target Hz must be set"
+        self.min_frame_interval = 1.0 / self.target_hz - 0.01 # 0.1 seconds for 10Hz
+        self.last_process_time = 0.0
+
         # Performance logging timer
         if self.log_inference_time:
             self.create_timer(5.0, self._log_performance)
@@ -118,6 +123,7 @@ class DepthAnything3Node(Node):
         # Performance
         self.declare_parameter("queue_size", 1)
         self.declare_parameter("processing_threads", 1)
+        self.declare_parameter("target_hz", 10.0)
 
         # Logging
         self.declare_parameter("log_inference_time", False)
@@ -144,6 +150,7 @@ class DepthAnything3Node(Node):
         # Performance
         self.queue_size = self.get_parameter("queue_size").value
         self.processing_threads = self.get_parameter("processing_threads").value
+        self.target_hz = self.get_parameter("target_hz").value
 
         # Logging
         self.log_inference_time = self.get_parameter("log_inference_time").value
@@ -164,6 +171,12 @@ class DepthAnything3Node(Node):
         Args:
             msg: Input image message from camera (any camera type)
         """
+        # Rate limiting check
+        current_time = time.time()
+        if current_time - self.last_process_time < self.min_frame_interval:
+            return
+        self.last_process_time = current_time
+
         start_time = time.time()
 
         try:
